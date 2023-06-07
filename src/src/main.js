@@ -5,7 +5,7 @@ import "element-plus/dist/index.css";
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import { ElMessage } from 'element-plus'
 import './utils/global'
-
+import './utils/linq'
 const app = createApp(App);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
