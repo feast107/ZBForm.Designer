@@ -2,7 +2,6 @@
     <div class="fill">
         <div id="Container" class="fill" style="z-index: 50;top:0; left :0; position: absolute;">
             <DragableRect style="background-color: #00f3f380;" :rect="rect">
-                
             </DragableRect>
         </div>
         <div id="Background" class="fill" style="top:0; position: absolute;">
