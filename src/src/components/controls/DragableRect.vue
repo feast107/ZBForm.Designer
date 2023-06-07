@@ -6,36 +6,36 @@
         <slot default style=""></slot>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeLeftTop)" :onmouseup="resizeup"
             style="cursor: nw-resize;"
-            :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeRightTop)" :onmouseup="resizeup"
             style="cursor: ne-resize;"
-            :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeLeftBottom)" :onmouseup="resizeup"
             style="cursor: sw-resize;"
-            :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeRightBottom)" :onmouseup="resizeup"
             style="cursor: se-resize;"
-            :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
 
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeLeft)" :onmouseup="resizeup"
             style="cursor: w-resize;"
-            :style="`width: ${outer}px;height: ${region.Height}px;left: -${outer}px;top: ${0}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${outer}px;height: ${region.Height}px;left: -${outer}px;top: ${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeTop)" :onmouseup="resizeup"
             style="cursor: n-resize;"
-            :style="`width: ${region.Width}px;height: ${outer}px;left:  ${0}px;top:-${outer}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${region.Width}px;height: ${outer}px;left:  ${0}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeRight)" :onmouseup="resizeup"
             style="cursor: e-resize;"
-            :style="`width: ${outer}px;height: ${region.Height}px;right:-${outer}px;top:${0}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${outer}px;height: ${region.Height}px;right:-${outer}px;top:${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeBottom)" :onmouseup="resizeup"
             style="cursor: s-resize;"
-            :style="`width: ${region.Width}px;height: ${outer}px;left:  ${0}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'}`">
+            :style="`width: ${region.Width}px;height: ${outer}px;left:  ${0}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
     </div>
 </template>
@@ -44,7 +44,7 @@
 import { Point } from '@/utils/drawing/point';
 import { Rect } from '@/utils/drawing/rect';
 export default {
-    props: ['rect'],
+    props: ['rect', 'borderColor'],
     data() {
         return {
             /**
@@ -56,7 +56,8 @@ export default {
             resizing: false,
             lastPoint: null,
             outer: 10,
-            showDrag: true,
+            showDrag: false,
+            borderDefault: '#a0a0a080'
         }
     },
     mounted() {
@@ -184,6 +185,5 @@ export default {
 <style style="scss">
 .resizer {
     position: absolute;
-    background-color: #a0a0a080;
 }
 </style>
