@@ -4,36 +4,36 @@
         <div :onmousedown="mousedown" :onclick="switchDrag" :onmouseup="mouseup" style="height: 100%;width:100%;">
         </div>
         <slot default style=""></slot>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeLeftTop)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeLeftTop)" :onmouseup="resizeup"
             style="cursor: nw-resize;"
             :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'}`">
         </div>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeRightTop)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeRightTop)" :onmouseup="resizeup"
             style="cursor: ne-resize;"
             :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'}`">
         </div>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeLeftBottom)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeLeftBottom)" :onmouseup="resizeup"
             style="cursor: sw-resize;"
             :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'}`">
         </div>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeRightBottom)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeRightBottom)" :onmouseup="resizeup"
             style="cursor: se-resize;"
             :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'}`">
         </div>
 
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeLeft)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeLeft)" :onmouseup="resizeup"
             style="cursor: w-resize;"
             :style="`width: ${outer}px;height: ${region.Height}px;left: -${outer}px;top: ${0}px;display:${showDrag ? '' : 'none'}`">
         </div>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeTop)" :onmouseup="resizeup" 
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeTop)" :onmouseup="resizeup"
             style="cursor: n-resize;"
             :style="`width: ${region.Width}px;height: ${outer}px;left:  ${0}px;top:-${outer}px;display:${showDrag ? '' : 'none'}`">
         </div>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeRight)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeRight)" :onmouseup="resizeup"
             style="cursor: e-resize;"
             :style="`width: ${outer}px;height: ${region.Height}px;right:-${outer}px;top:${0}px;display:${showDrag ? '' : 'none'}`">
         </div>
-        <div class="resizer" :onmousedown="(e)=>this.resizedown(e,this.resizeBottom)" :onmouseup="resizeup"
+        <div class="resizer" :onmousedown="(e) => this.resizedown(e, this.resizeBottom)" :onmouseup="resizeup"
             style="cursor: s-resize;"
             :style="`width: ${region.Width}px;height: ${outer}px;left:  ${0}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'}`">
         </div>
@@ -94,18 +94,18 @@ export default {
          * @param {MouseEvent} event
          * @param {function<Point>} handler 
          */
-        resizedown(event,handler) {
+        resizedown(event, handler) {
             this.resizing = true;
             this.lastPoint = new Point(event.x, event.y);
-            window.onmousemove = (e)=>{
-                if(!this.resizing)return;
+            window.onmousemove = (e) => {
+                if (!this.resizing) return;
                 let xOffset = e.x - this.lastPoint.x;
                 let yOffset = e.y - this.lastPoint.y;
                 var curr = new Point(xOffset, yOffset);
                 handler(curr);
                 this.lastPoint = new Point(e.x, e.y);
             };
-            window.onmouseup = this.resizeup; 
+            window.onmouseup = this.resizeup;
         },
         resizeup() {
             this.resizing = false;
@@ -119,63 +119,63 @@ export default {
          */
         resizeLeftTop(point) {
             var tmp = this.region.LeftTop;
-            this.region.LeftTop = new Point(tmp.X + point.X , tmp.Y + point.Y); 
+            this.region.LeftTop = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeRightTop(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeRightTop(point) {
             var tmp = this.region.RightTop;
-            this.region.RightTop = new Point(tmp.X + point.X , tmp.Y + point.Y); 
+            this.region.RightTop = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeLeftBottom(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeLeftBottom(point) {
             var tmp = this.region.LeftBottom;
-            this.region.LeftBottom = new Point(tmp.X + point.X , tmp.Y + point.Y); 
+            this.region.LeftBottom = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeRightBottom(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeRightBottom(point) {
             var tmp = this.region.RightBottom;
-            this.region.RightBottom = new Point(tmp.X + point.X , tmp.Y + point.Y); 
+            this.region.RightBottom = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeLeft(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeLeft(point) {
             var tmp = this.region.Left;
             this.region.Left = tmp + point.X;
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeRight(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeRight(point) {
             var tmp = this.region.Right;
             this.region.Right = tmp + point.X;
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeTop(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeTop(point) {
             var tmp = this.region.Top;
             this.region.Top = tmp + point.Y;
         },
-         /**
-         * 
-         * @param {Point} point 
-         */
-         resizeBottom(point) {
+        /**
+        * 
+        * @param {Point} point 
+        */
+        resizeBottom(point) {
             var tmp = this.region.Bottom;
-            this.region.Bottom = tmp + point.Y; 
+            this.region.Bottom = tmp + point.Y;
         },
     }
 }
