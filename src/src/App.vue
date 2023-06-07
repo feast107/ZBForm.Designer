@@ -1,15 +1,15 @@
 <template>
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <DesignView></DesignView>
 </template>
 
 <script>
+import DesignView from "./components/DesignView.vue";
 import HelloWorld from "./components/HelloWorld.vue";
 
 export default {
     name: "App",
     components: {
-        HelloWorld,
+        DesignView,
     },
     created(){
       window.message = this.$message;
