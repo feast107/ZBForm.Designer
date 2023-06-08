@@ -1,6 +1,6 @@
 <template>
     <div style=" position: absolute;" ref="ref"
-        :style="`height:${region.Height}px;width:${region.Width}px;top:${region.Top}px;left:${region.Left}px;`">
+        :style="`height:${region.Height}px;width:${region.Width}px;top:${region.Top}px;left:${region.Left}px;z-index:${index}`">
         <div :onmousedown="mousedown" :onclick="switchDrag" :onmouseup="mouseup" style="height: 100%;width:100%;">
         </div>
         <slot default style=""></slot>
@@ -56,6 +56,7 @@ export default {
             resizing: false,
             lastPoint: null,
             outer: 10,
+            index: 99,
             showDrag: false,
             borderDefault: '#a0a0a080'
         }
@@ -71,12 +72,14 @@ export default {
         mousedown(e) {
             this.dragging = true;
             this.lastPoint = new Point(e.x, e.y);
+            this.index = 100;
             window.onmousemove = this.mousemove;
         },
         mouseup(_) {
             this.dragging = false;
             this.lastPoint = null;
             window.onmousemove = null;
+            this.index = 1;
             setTimeout(() => {
                 this.dragged = false;
             }, 0);
