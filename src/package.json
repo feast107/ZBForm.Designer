@@ -72,6 +72,7 @@
             "no-unreachable": "off",
             "vue/comment-directive": "off",
             "vue/no-unused-vars": "off",
+            "vue/no-mutating-props": "off",
             "vue/no-parsing-error": "off",
             "vue/no-unused-components": "off",
             "vue/multi-word-component-names": "off"
