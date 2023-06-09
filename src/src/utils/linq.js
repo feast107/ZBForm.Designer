@@ -11,6 +11,9 @@
     Array.prototype.add ??= function (item) {
         this.push(item);
     };
+    Array.prototype.last ??= function () {
+        return this[this.length -1];
+    };
     Array.prototype.remove ??= function (item) {
         let index = this.findIndex((x) => Object.is(x, item));
         return index > -1 ? !!this.splice(index, 1) : false;
