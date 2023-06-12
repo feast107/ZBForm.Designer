@@ -4,11 +4,11 @@
         <div :onmousedown="mousedown" :onclick="switchDrag" :onmouseup="mouseup" style="height: 100%;width:100%;">
             <div v-for="(col, index) in columDefinitions" :key="col"
                  :onmousedown="(e) => this.editDown(e, (point) => this.colEdit(point, index))"
-                 :style="`left:${col}px;width:${this.showDrag ? 2 : 1}px;height:${rectangle.Height}px;background-color:${this.showDrag ? 'orange' : 'black'}`"
+                 :style="`left:${col}px;width:${this.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${this.showDrag ? 'orange' : 'black'}`"
                  style="cursor: w-resize;" class="innerBorder"></div>
             <div v-for="(row, index) in rowDefinitions" :key="row"
                  :onmousedown="(e) => this.editDown(e, (point) => this.rowEdit(point, index))"
-                 :style="`top:${row}px;height:${this.showDrag ? 2 : 1}px;width:${rectangle.Width}px;background-color:${this.showDrag ? 'orange' : 'black'}`"
+                 :style="`top:${row}px;height:${this.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${this.showDrag ? 'orange' : 'black'}`"
                  style="cursor: n-resize;" class="innerBorder"></div>
         </div>
         <slot default style=""></slot>
@@ -53,7 +53,7 @@ import {Point} from '@/utils/drawing/point';
 import {Rect} from '@/utils/drawing/rect';
 
 export default {
-    props: ['rect', 'borderColor', 'onResizeStart', 'onResizing', 'onResizeEnd', 'onChanged'],
+    props: ['rect', 'borderColor', 'onResizeStart', 'onResizing', 'onResizeEnd', 'onChanged', 'onSelect'],
     data() {
         return {
             /**
@@ -82,7 +82,7 @@ export default {
     mounted() {
     },
     watch: {
-        region: {
+        rectangle: {
             deep: true,
             /**
              *
@@ -90,7 +90,10 @@ export default {
              * @param {Rect} o
              */
             handler(n, o) {
-                if (this.rowDefinitions.length && this.columDefinitions.length === 0) return;
+                if (this.rowDefinitions.length && this.columDefinitions.length === 0) {
+                    this.change();
+                    return;
+                }
                 if (n.Height < this.rowDefinitions.last()) {
                     this.rowDefinitions[this.columDefinitions.length - 1] = n.Height;
                     this.rowDefinitions = this.rowDefinitions.orderBy(x => x);
@@ -99,33 +102,34 @@ export default {
                     this.columDefinitions[this.columDefinitions.length - 1] = n.Width;
                     this.columDefinitions = this.columDefinitions.orderBy(x => x);
                 }
+                this.change();
             }
         },
-        rowDefs: {
+        rowDefinitions: {
             deep: true,
             handler(n, o) {
-                this.onChanged?.call(null, {
-                    rectangle: this.rectangle,
-                    columDefinitions : this.columDefinitions,
-                    rowDefinitions : this.rowDefinitions
-                });
+                this.change();
             }
         },
-        colDefs: {
+        columDefinitions: {
             deep: true,
             handler(n, o) {
-                this.onChanged?.call(null, {
-                    rectangle: this.rectangle,
-                    columDefinitions : this.columDefinitions,
-                    rowDefinitions : this.rowDefinitions
-                });
+                this.change();
             }
         }
     },
     methods: {
+        change() {
+            this.onChanged?.call(null, {
+                rectangle: this.rectangle,
+                columDefinitions: this.columDefinitions,
+                rowDefinitions: this.rowDefinitions
+            });
+        },
         switchDrag() {
             if (this.dragged) return;
             this.showDrag = !this.showDrag;
+            this.onSelect?.call(null,this.rect);
         },
         mousedown(e) {
             if (this.editing) return;
