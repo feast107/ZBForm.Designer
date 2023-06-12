@@ -10,7 +10,6 @@ const app = createApp(App);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
 }
-app.config.unwrapInjectedRef = true;
 app.use(ElementPlus);
 app.$message = ElMessage;
 app.mount("#app");
