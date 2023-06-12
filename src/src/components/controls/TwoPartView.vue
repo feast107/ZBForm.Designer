@@ -1,12 +1,13 @@
 <template>
-    <div>
-        <div class="scale"
-            :style="`display:${ show ? '' : 'none' };height:${height}px;width:${width}px`">
+    <div >
+        <div class="scale" :style="`display:${ show ? '' : 'none' };height:${height}px;width:${width}px`">
             <div style="position: absolute;z-index: 70; " :style="`top:${top}px;left:${left}px`">
                 <slot default></slot>
             </div>
         </div>
-        <slot default></slot>
+        <div style="">
+            <slot default></slot>
+        </div>
     </div>
 </template>
 
@@ -17,13 +18,12 @@ export default {
 </script>
 
 <style scoped>
-.scale{
+.scale {
     z-index: 60;
-    position: fixed;
-    top:0;
-    left:0;
+    position: absolute;
     overflow: hidden;
     border: 3px solid rgba(65, 60, 60, 0.78);
+    border-radius: 100px;
     user-select: none;
     pointer-events: none
 }
