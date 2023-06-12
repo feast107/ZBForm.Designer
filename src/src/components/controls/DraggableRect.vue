@@ -1,6 +1,6 @@
 <template>
     <div style=" position: absolute;" ref="ref"
-        :style="`height:${rectangle.Height}px;width:${rectangle.Width}px;top:${rectangle.Top}px;left:${rectangle.Left}px;z-index:${index}`">
+         :style="`height:${rectangle.Height}px;width:${rectangle.Width}px;top:${rectangle.Top}px;left:${rectangle.Left}px;z-index:${index}`">
         <div :onmousedown="mousedown" :onclick="switchDrag" :onmouseup="mouseup" style="height: 100%;width:100%;">
         </div>
         <slot default style=""></slot>
@@ -20,7 +20,7 @@
              style="cursor: se-resize;"
              :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
         </div>
-
+        
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeft)" :onmouseup="onResizeUp"
              style="cursor: w-resize;"
              :style="`width: ${outer}px;height: ${rectangle.Height}px;left: -${outer}px;top: ${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
@@ -41,10 +41,11 @@
 </template>
 
 <script>
-import { Point } from '@/utils/drawing/point';
-import { Rect } from '@/utils/drawing/rect';
+import {Point} from '@/utils/drawing/point';
+import {Rect} from '@/utils/drawing/rect';
+
 export default {
-    props: ['rect', 'borderColor', 'onResizeStart', 'onResizing', 'onResizeEnd', 'onChanged' ],
+    props: ['rect', 'borderColor', 'onResizeStart', 'onResizing', 'onResizeEnd', 'onChanged', 'onSelect'],
     data() {
         return {
             /**
@@ -61,19 +62,33 @@ export default {
             borderDefault: '#a0a0a080'
         }
     },
+    watch: {
+        rectangle: {
+            handler(n, o) {
+                this.change();
+            },
+            deep: true
+        }
+    },
     mounted() {
     },
     methods: {
+        change() {
+            this.onChanged?.call(null, {
+                rectangle: this.rectangle,
+            });
+        },
         /**
          * 切换四角
          */
         switchDrag() {
             if (this.dragged) return;
             this.showDrag = !this.showDrag;
+            this.onSelect?.call(null, this.rect);
         },
         /**
          * 拖动按下
-         * @param {MouseEvent} e 
+         * @param {MouseEvent} e
          */
         mousedown(e) {
             this.dragging = true;
@@ -92,7 +107,7 @@ export default {
         },
         /**
          * 拖动中
-         * @param {MouseEvent} e 
+         * @param {MouseEvent} e
          */
         mousemove(e) {
             if (!this.dragging) return;
@@ -104,7 +119,6 @@ export default {
         },
         /**
          *
-         * .
          * @param {MouseEvent} event
          * @param {(Point)=>void} handler
          */
@@ -128,62 +142,62 @@ export default {
             this.onResizeEnd?.call(null);
         },
         /**
-         * 
-         * @param {Point} point 
+         *
+         * @param {Point} point
          */
         resizeLeftTop(point) {
-            var tmp = this.rectangle.LeftTop;
+            const tmp = this.rectangle.LeftTop;
             this.rectangle.LeftTop = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeRightTop(point) {
-            var tmp = this.rectangle.RightTop;
+            const tmp = this.rectangle.RightTop;
             this.rectangle.RightTop = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeLeftBottom(point) {
-            var tmp = this.rectangle.LeftBottom;
+            const tmp = this.rectangle.LeftBottom;
             this.rectangle.LeftBottom = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeRightBottom(point) {
-            var tmp = this.rectangle.RightBottom;
+            const tmp = this.rectangle.RightBottom;
             this.rectangle.RightBottom = new Point(tmp.X + point.X, tmp.Y + point.Y);
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeLeft(point) {
             this.rectangle.Left += point.X;
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeRight(point) {
             this.rectangle.Right += point.X;
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeTop(point) {
             this.rectangle.Top += point.Y;
         },
         /**
-        * 
-        * @param {Point} point 
-        */
+         *
+         * @param {Point} point
+         */
         resizeBottom(point) {
             this.rectangle.Bottom += point.Y;
         },
