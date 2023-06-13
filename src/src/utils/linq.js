@@ -12,7 +12,7 @@
         this.push(item);
     };
     Array.prototype.last ??= function () {
-        return this[this.length -1];
+        return this.length === 0 ? null : this[this.length - 1];
     };
     Array.prototype.remove ??= function (item) {
         let index = this.findIndex((x) => Object.is(x, item));
@@ -96,6 +96,7 @@
         return this.splice(index, 1);
     };
     Array.prototype.any ??= function (predicate) {
+        if (predicate == null) return this.length > 0;
         let index = 0;
         while (index < this.length) {
             if (predicate(this[index])) {
