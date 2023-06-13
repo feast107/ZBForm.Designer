@@ -42,12 +42,12 @@
                     </el-main>
                     <el-aside style="overflow: hidden">
                         <el-card class="box-card" style="height: 100%;" shadow="always">
-                            <el-form  v-if="this.editingRect != null">
+                            <el-form v-if="this.editingRect != null">
                                 <el-descriptions
                                     title="区域"
                                     style="margin: 10px;"
                                     direction="vertical"
-                                    column="2"
+                                    :column="2"
                                     border
                                     v-if="this.editingRect.type === 'rect' "
                                 >
@@ -108,7 +108,7 @@
                                     title="表格"
                                     style="margin: 10px;"
                                     direction="vertical"
-                                    column="2"
+                                    :column="2"
                                     border
                                     v-if="this.editingRect.type === 'table' "
                                 >
@@ -134,36 +134,20 @@
                                         <el-statistic prefix="Y:"
                                                       :value="this.editingRect.region.rectangle.RightBottom.Y"/>
                                     </el-descriptions-item>
-                                    <div>
-                                        <el-descriptions-item>
-                                            <template #label>
-                                                <el-icon>
-                                                    <TopLeft/>
-                                                </el-icon>
-                                                左上
-                                            </template>
-                                            <el-statistic prefix="X:" :value="this.editingRect.region.rectangle.LeftTop.X"/>
-                                            <el-statistic prefix="Y:" :value="this.editingRect.region.rectangle.LeftTop.Y"/>
-                                        </el-descriptions-item>
-                                        <el-descriptions-item>
-                                            <template #label>
-                                                <el-icon>
-                                                    <BottomRight/>
-                                                </el-icon>
-                                                右下
-                                            </template>
-                                            <el-statistic prefix="X:"
-                                                          :value="this.editingRect.region.rectangle.RightBottom.X"/>
-                                            <el-statistic prefix="Y:"
-                                                          :value="this.editingRect.region.rectangle.RightBottom.Y"/>
-                                        </el-descriptions-item>
-                                    </div>
+                                    <el-descriptions-item label="内部单元格">
+                                        <el-button @click="() => editingRect.showInfo = true">查看信息</el-button>
+                                    </el-descriptions-item>
+                                
                                 </el-descriptions>
                             </el-form>
                         </el-card>
                     </el-aside>
+                    <el-dialog v-if="editingRect?.showInfo"
+                               v-model="editingRect.showInfo" align-center
+                               title="内部单元格">
+                        <TableDetailView :table="editingRect"></TableDetailView>
+                    </el-dialog>
                 </el-container>
-            
             </el-container>
         </el-container>
     </div>
@@ -172,9 +156,11 @@
 
 <script>
 import TwoPartView from './controls/TwoPartView.vue'
-import {Rect} from '@/utils/drawing/rect'
 import DraggableRect from './controls/DraggableRect.vue';
 import DraggableTable from './controls/DraggableTable.vue';
+import TableDetailView from "@/components/controls/TableDetailView.vue";
+
+import {Rect} from '@/utils/drawing/rect'
 import {Point} from '@/utils/drawing/point';
 import {Size} from '@/utils/drawing/size';
 
@@ -182,7 +168,8 @@ export default {
     components: {
         DraggableRect,
         DraggableTable,
-        TwoPartView
+        TwoPartView,
+        TableDetailView
     },
     created() {
         window.onresize = (e) => {
@@ -209,14 +196,16 @@ export default {
             tables: [
                 {
                     type: 'table',
+                    showInfo: false,
                     region: {
-                        rectangle: new Rect(200, 200, 100, 100),
-                        rowDefinitions: [10, 50],
-                        columDefinitions: [10, 30]
+                        rectangle: new Rect(370, 372, 332, 176),
+                        rowDefinitions: [85, 131],
+                        columDefinitions: [119, 179]
                     },
                 },
                 {
                     type: 'table',
+                    showInfo: false,
                     region: {
                         rectangle: new Rect(300, 400, 100, 100),
                         rowDefinitions: [10, 20, 30],
@@ -267,6 +256,17 @@ export default {
 .fill {
     height: 100%;
     width: 100%;
+}
+
+.hoverBox {
+    height: 100%;
+    width: 100%;
+}
+
+.hoverBox :hover {
+    background-color: rgba(39, 89, 99, 0.78);
+    transition-delay: 0.1s;
+    transition-duration: 0.25s;
 }
 
 #Background {
