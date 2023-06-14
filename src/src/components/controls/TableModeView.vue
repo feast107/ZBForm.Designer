@@ -18,15 +18,15 @@
             <div v-for="(item,index) in table.region.columDefinitions.concat([table.region.rectangle.Width])"
                  :key="item">
                 <el-popover width="200" :placement="placement" :trigger="trigger">
-                    <el-select  @change="(val)=>setMode(index,val)"
-                                style="--el-select-input-focus-border-color: #30d230;"
-                                :placeholder="placeholder"
-                                v-model="table.modes.configs[index]">
+                    <el-select @change="(val)=>setMode(index,val)"
+                               style="--el-select-input-focus-border-color: #30d230;"
+                               :placeholder="placeholder"
+                               v-model="table.modes.configs[index]">
                         <el-option style="--el-color-primary: #30d230"
-                            v-for="item in options"
-                            :key="item.value"
-                            :label="item.name"
-                            :value="item"
+                                   v-for="item in options"
+                                   :key="item.value"
+                                   :label="item.name"
+                                   :value="item"
                         />
                     </el-select>
                     <template #reference>
@@ -49,9 +49,9 @@
             <div v-for="(item,index) in table.region.rowDefinitions.concat([table.region.rectangle.Height])"
                  :key="item">
                 <el-popover width="200" placement="left" :trigger="trigger">
-                    <el-select  @change="(val)=>setMode(index,val)"
-                                :placeholder="placeholder"
-                                v-model="table.modes.configs[index]">
+                    <el-select @change="(val)=>setMode(index,val)"
+                               :placeholder="placeholder"
+                               v-model="table.modes.configs[index]">
                         <el-option
                             v-for="item in options"
                             :key="item.value"
@@ -116,20 +116,21 @@ import {Rect} from "@/utils/drawing/rect";
 export default {
     props: {
         table: null,
+        options: {
+            default: []
+        },
+        placeholder: {
+            default: '空',
+            type: String,
+        }
     },
     data() {
-        if(this.table.modes.configs == null){
+        if (this.table.modes.configs == null) {
             this.table.modes.configs = new Map();
         }
         return {
             trigger: 'click',
             placement: 'top',
-            placeholder : '识别类型',
-            options: [
-                {name: '精准', value: 'precise'},
-                {name: '布尔', value: 'bool'},
-                {name: '字符', value: 'string'}
-            ]
         }
     },
     watch: {
@@ -169,8 +170,8 @@ export default {
         getAllCells(region) {
             return region.getCells();
         },
-        setMode(index,mode) {
-            this.table.modes.configs.set(index,mode);
+        setMode(index, mode) {
+            this.table.modes.configs.set(index, mode);
             console.log(this.table.modes.configs);
         },
         removeMode(index) {
