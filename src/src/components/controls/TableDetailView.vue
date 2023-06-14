@@ -36,20 +36,16 @@
                         <template #default>
                             <el-descriptions direction="vertical" :column="2" border>
                                 <el-descriptions-item label="X">
-                                    <el-statistic
-                                        :value="item.rectangle.Left * scale + offset"/>
+                                    <el-statistic :value="item.rectangle.Left * scale + offset"/>
                                 </el-descriptions-item>
                                 <el-descriptions-item label="Y">
-                                    <el-statistic
-                                        :value="item.rectangle.Top * scale + offset"/>
+                                    <el-statistic :value="item.rectangle.Top * scale + offset"/>
                                 </el-descriptions-item>
                                 <el-descriptions-item label="宽">
-                                    <el-statistic
-                                        :value="item.rectangle.Width * scale + offset"/>
+                                    <el-statistic :value="item.rectangle.Width * scale + offset"/>
                                 </el-descriptions-item>
                                 <el-descriptions-item label="高">
-                                    <el-statistic
-                                        :value="item.rectangle.Height * scale + offset"/>
+                                    <el-statistic :value="item.rectangle.Height * scale + offset"/>
                                 </el-descriptions-item>
                             </el-descriptions>
                         </template>
