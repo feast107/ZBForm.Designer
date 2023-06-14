@@ -13,11 +13,11 @@ export class Table {
         }
     }
 
-    getCells() {
-        return this.getMatrix().aggregate([], (arr, cur) => arr.concat(cur));
+    getCells(scale = 1) {
+        return this.getMatrix(scale).aggregate([], (arr, cur) => arr.concat(cur));
     }
 
-    getMatrix() {
+    getMatrix(scale = 1) {
         let ret = [];
         for (let row = 0; row <= this.rowDefinitions.length; row++) {
             let cache = [];
@@ -41,7 +41,13 @@ export class Table {
                 }
                 left += this.rectangle.Left;
                 cache.push({
-                    rectangle : new Rect(left, top, width, height), row, col
+                    rectangle: new Rect(
+                        left * scale,
+                        top * scale,
+                        width * scale,
+                        height * scale),
+                    row: row * scale,
+                    col: col * scale
                 });
             }
             ret.push(cache);
