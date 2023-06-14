@@ -4,46 +4,46 @@
         <div :onmousedown="mousedown" :onclick="switchDrag" :onmouseup="mouseup" style="height: 100%;width:100%;">
             <div v-for="(col, index) in columDefinitions" :key="col"
                  :onmousedown="(e) => this.editDown(e, (point) => this.colEdit(point, index))"
-                 :style="`left:${col}px;width:${this.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${this.showDrag ? 'orange' : 'black'}`"
+                 :style="`left:${col}px;width:${this.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${this.showDrag ? lineColor : 'black'}`"
                  style="cursor: w-resize;" class="innerBorder"></div>
             <div v-for="(row, index) in rowDefinitions" :key="row"
                  :onmousedown="(e) => this.editDown(e, (point) => this.rowEdit(point, index))"
-                 :style="`top:${row}px;height:${this.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${this.showDrag ? 'orange' : 'black'}`"
+                 :style="`top:${row}px;height:${this.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${this.showDrag ? lineColor : 'black'}`"
                  style="cursor: n-resize;" class="innerBorder"></div>
         </div>
         <slot default style=""></slot>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeftTop)" :onmouseup="onResizeUp"
              style="cursor: nw-resize;"
-             :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeRightTop)" :onmouseup="onResizeUp"
              style="cursor: ne-resize;"
-             :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeftBottom)" :onmouseup="onResizeUp"
              style="cursor: sw-resize;"
-             :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeRightBottom)" :onmouseup="onResizeUp"
              style="cursor: se-resize;"
-             :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeft)" :onmouseup="onResizeUp"
              style="cursor: w-resize;"
-             :style="`width: ${outer}px;height: ${rectangle.Height}px;left: -${outer}px;top: ${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${outer}px;height: ${rectangle.Height}px;left: -${outer}px;top: ${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeTop)" :onmouseup="onResizeUp"
              style="cursor: n-resize;"
-             :style="`width: ${rectangle.Width}px;height: ${outer}px;left:  ${0}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${rectangle.Width}px;height: ${outer}px;left:  ${0}px;top:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeRight)" :onmouseup="onResizeUp"
              style="cursor: e-resize;"
-             :style="`width: ${outer}px;height: ${rectangle.Height}px;right:-${outer}px;top:${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${outer}px;height: ${rectangle.Height}px;right:-${outer}px;top:${0}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeBottom)" :onmouseup="onResizeUp"
              style="cursor: s-resize;"
-             :style="`width: ${rectangle.Width}px;height: ${outer}px;left:  ${0}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor ?? borderDefault}`">
+             :style="`width: ${rectangle.Width}px;height: ${outer}px;left:  ${0}px;bottom:-${outer}px;display:${showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
     </div>
 </template>
@@ -53,7 +53,32 @@ import {Point} from '@/utils/drawing/point';
 import {Rect} from '@/utils/drawing/rect';
 
 export default {
-    props: ['rect', 'borderColor', 'onResizeStart', 'onResizing', 'onResizeEnd', 'onChanged', 'onSelect'],
+    props : {
+        rect : null,
+        lineColor : {
+            type : String,
+            default : '#ffab0f'
+        },
+        borderColor : {
+            type : String,
+            default : '#a0a0a080'
+        },
+        onResizeStart :{
+            type : Function,
+        },
+        onResizing : {
+            type : Function,
+        },
+        onResizeEnd : {
+            type : Function,
+        },
+        onChanged : {
+            type : Function,
+        },
+        onSelect : {
+            type : Function,
+        }
+    },
     data() {
         return {
             /**
@@ -68,7 +93,6 @@ export default {
             outer: 10,
             index: 99,
             showDrag: false,
-            borderDefault: '#a0a0a080',
             /**
              * @type {Number[]}
              */
