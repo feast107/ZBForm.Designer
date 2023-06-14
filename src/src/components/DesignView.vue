@@ -5,64 +5,34 @@
             
             </el-header>
             <el-container style="">
-                <el-aside>
+                <el-aside width="auto">
                     <el-scrollbar>
-                        <el-menu style="--active-color:#3390ef"
-                                 :default-openeds="['1', '3']">
+                        <el-menu style="--active-color:#3390ef" :collapse="expand"
+                                 :default-openeds="['1']">
+                            <el-menu-item @click="()=> expand = !expand">
+                                <el-icon>
+                                    <DArrowRight v-if="expand"/>
+                                    <DArrowLeft v-else/>
+                                </el-icon>
+                                <template #title>
+                                    <span v-if="expand">展开</span>
+                                    <span v-else>收起</span>
+                                </template>
+                            </el-menu-item>
                             <el-sub-menu index="1">
                                 <template #title>
                                     <el-icon>
                                         <FullScreen/>
                                     </el-icon>
-                                    区域
+                                    <span>区域</span>
                                 </template>
-                                <el-menu-item-group style="padding-bottom: 20px">
+                                <el-menu-item style="padding: 0 20px">
                                     <el-space>
                                         <el-button @click="e=>rects.push(defaults.rect)">单元
                                         </el-button>
                                         <el-button @click="e=>tables.push(defaults.table)">表格</el-button>
                                     </el-space>
-                                </el-menu-item-group>
-                            </el-sub-menu>
-                            <el-sub-menu index="2">
-                                <template #title>
-                                    <el-icon>
-                                        <icon-menu/>
-                                    </el-icon>
-                                    Navigator Two
-                                </template>
-                                <el-menu-item-group>
-                                    <template #title>Group 1</template>
-                                    <el-menu-item index="2-1">Option 1</el-menu-item>
-                                    <el-menu-item index="2-2">Option 2</el-menu-item>
-                                </el-menu-item-group>
-                                <el-menu-item-group title="Group 2">
-                                    <el-menu-item index="2-3">Option 3</el-menu-item>
-                                </el-menu-item-group>
-                                <el-sub-menu index="2-4">
-                                    <template #title>Option 4</template>
-                                    <el-menu-item index="2-4-1">Option 4-1</el-menu-item>
-                                </el-sub-menu>
-                            </el-sub-menu>
-                            <el-sub-menu index="3">
-                                <template #title>
-                                    <el-icon>
-                                        <setting/>
-                                    </el-icon>
-                                    Navigator Three
-                                </template>
-                                <el-menu-item-group>
-                                    <template #title>Group 1</template>
-                                    <el-menu-item index="3-1">Option 1</el-menu-item>
-                                    <el-menu-item index="3-2">Option 2</el-menu-item>
-                                </el-menu-item-group>
-                                <el-menu-item-group title="Group 2">
-                                    <el-menu-item index="3-3">Option 3</el-menu-item>
-                                </el-menu-item-group>
-                                <el-sub-menu index="3-4">
-                                    <template #title>Option 4</template>
-                                    <el-menu-item index="3-4-1">Option 4-1</el-menu-item>
-                                </el-sub-menu>
+                                </el-menu-item>
                             </el-sub-menu>
                         </el-menu>
                     </el-scrollbar>
@@ -102,7 +72,7 @@
                     </el-main>
                     <el-aside style="overflow: hidden">
                         <el-card class="box-card" style="height: 100%;" shadow="always">
-                            <el-form v-if="this.editingRect != null">
+                            <div v-if="this.editingRect != null">
                                 <el-button type="danger" @click="()=>{ removeOne(this.editingRect) }">删除</el-button>
                                 <el-descriptions
                                     title="区域"
@@ -211,15 +181,15 @@
                                         <el-button @click="() => showMode = true">设置</el-button>
                                     </el-descriptions-item>
                                 </el-descriptions>
-                            </el-form>
+                            </div>
                         </el-card>
                     </el-aside>
                     <el-dialog v-if="showInfo"
-                               v-model="showInfo" align-center
+                               v-model="showInfo" align-center style="border-radius: 20px"
                                title="内部单元格">
                         <TableDetailView :table="editingRect"></TableDetailView>
                     </el-dialog>
-                    <el-dialog v-if="showMode"
+                    <el-dialog v-if="showMode" style="border-radius: 20px"
                                v-model="showMode" align-center
                                title="识别模式">
                         <TableModeView :options="modes" :placeholder="modePlaceholder"
@@ -277,6 +247,7 @@ export default {
     data() {
         window.Rect = Rect;
         return {
+            expand: false,
             showMode: false,
             showInfo: false,
             showViewer: false,
@@ -300,7 +271,7 @@ export default {
                 get table() {
                     return {
                         modes: {
-                            direction: 'vertical',
+                            direction: 'horizontal',
                         },
                         type: 'table',
                         region: new Table({
@@ -323,7 +294,7 @@ export default {
             tables: [
                 {
                     modes: {
-                        direction: 'vertical',
+                        direction: 'horizontal',
                     },
                     type: 'table',
                     region: new Table({
@@ -334,7 +305,7 @@ export default {
                 },
                 {
                     modes: {
-                        direction: 'vertical'
+                        direction: 'horizontal'
                     },
                     type: 'table',
                     region: new Table({
@@ -412,10 +383,10 @@ export default {
                 this.tables.forEach(x => {
                     x.region.rectangle.scale(this.scaleDown);
                     for (let i = 0; i < x.region.rowDefinitions.length; i++) {
-                        x.region.rowDefinitions.insert(i,x.region.rowDefinitions.removeAt(i) * this.scaleDown);
+                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) * this.scaleDown);
                     }
                     for (let i = 0; i < x.region.columDefinitions.length; i++) {
-                        x.region.columDefinitions.insert(i,x.region.columDefinitions.removeAt(i) * this.scaleDown);
+                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) * this.scaleDown);
                     }
                 })
             } else {
@@ -426,10 +397,10 @@ export default {
                 this.tables.forEach(x => {
                     x.region.rectangle.scale(this.scaleUp);
                     for (let i = 0; i < x.region.rowDefinitions.length; i++) {
-                        x.region.rowDefinitions.insert(i,x.region.rowDefinitions.removeAt(i) * this.scaleUp);
+                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) * this.scaleUp);
                     }
                     for (let i = 0; i < x.region.columDefinitions.length; i++) {
-                        x.region.columDefinitions.insert(i,x.region.columDefinitions.removeAt(i) * this.scaleUp);
+                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) * this.scaleUp);
                     }
                 })
             }
