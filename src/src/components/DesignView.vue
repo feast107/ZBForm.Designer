@@ -5,15 +5,75 @@
             
             </el-header>
             <el-container style="">
-                <el-aside style="border: 1px solid firebrick">
-                
+                <el-aside>
+                    <el-scrollbar>
+                        <el-menu style="--active-color:#3390ef"
+                                 :default-openeds="['1', '3']">
+                            <el-sub-menu index="1">
+                                <template #title>
+                                    <el-icon>
+                                        <FullScreen/>
+                                    </el-icon>
+                                    区域
+                                </template>
+                                <el-menu-item-group style="padding-bottom: 20px">
+                                    <el-space>
+                                        <el-button @click="e=>rects.push(defaults.rect)">单元
+                                        </el-button>
+                                        <el-button @click="e=>tables.push(defaults.table)">表格</el-button>
+                                    </el-space>
+                                </el-menu-item-group>
+                            </el-sub-menu>
+                            <el-sub-menu index="2">
+                                <template #title>
+                                    <el-icon>
+                                        <icon-menu/>
+                                    </el-icon>
+                                    Navigator Two
+                                </template>
+                                <el-menu-item-group>
+                                    <template #title>Group 1</template>
+                                    <el-menu-item index="2-1">Option 1</el-menu-item>
+                                    <el-menu-item index="2-2">Option 2</el-menu-item>
+                                </el-menu-item-group>
+                                <el-menu-item-group title="Group 2">
+                                    <el-menu-item index="2-3">Option 3</el-menu-item>
+                                </el-menu-item-group>
+                                <el-sub-menu index="2-4">
+                                    <template #title>Option 4</template>
+                                    <el-menu-item index="2-4-1">Option 4-1</el-menu-item>
+                                </el-sub-menu>
+                            </el-sub-menu>
+                            <el-sub-menu index="3">
+                                <template #title>
+                                    <el-icon>
+                                        <setting/>
+                                    </el-icon>
+                                    Navigator Three
+                                </template>
+                                <el-menu-item-group>
+                                    <template #title>Group 1</template>
+                                    <el-menu-item index="3-1">Option 1</el-menu-item>
+                                    <el-menu-item index="3-2">Option 2</el-menu-item>
+                                </el-menu-item-group>
+                                <el-menu-item-group title="Group 2">
+                                    <el-menu-item index="3-3">Option 3</el-menu-item>
+                                </el-menu-item-group>
+                                <el-sub-menu index="3-4">
+                                    <template #title>Option 4</template>
+                                    <el-menu-item index="3-4-1">Option 4-1</el-menu-item>
+                                </el-sub-menu>
+                            </el-sub-menu>
+                        </el-menu>
+                    </el-scrollbar>
                 </el-aside>
                 <el-container>
                     <el-main style="border: 1px solid yellowgreen;height:700px;width:900px">
                         <el-scrollbar>
                             <TwoPartView :top="-mousePos.Y" :left="-mousePos.X" :show="showViewer" width="200"
                                          height="200">
-                                <div ref="view" style="height:700px;width:900px;position: relative">
+                                <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
+                                     style="position: relative">
                                     <div id="Container" class="fill" style="z-index: 50;top:0; left :0;">
                                         <DraggableRect v-for="rect in rects" :key="rect"
                                                        style="background-color: #00f3f380;" :rect="rect.region"
@@ -50,7 +110,7 @@
                                     direction="vertical"
                                     :column="2"
                                     border
-                                    v-if="this.editingRect.type === 'rect' "
+                                    v-if="this.editingRect.type === 'unit' "
                                 >
                                     <el-descriptions-item>
                                         <template #label>
@@ -104,6 +164,15 @@
                                     <el-descriptions-item label="高">
                                         <el-statistic :value="this.editingRect.region.rectangle.Height"/>
                                     </el-descriptions-item>
+                                    <el-descriptions-item label="识别模式">
+                                        <el-select v-model="this.editingRect.mode" :placeholder="modePlaceholder">
+                                            <el-option v-for="item in modes"
+                                                       :key="item.value"
+                                                       :label="item.name"
+                                                       :value="item"
+                                            />
+                                        </el-select>
+                                    </el-descriptions-item>
                                 </el-descriptions>
                                 <el-descriptions
                                     title="表格"
@@ -153,7 +222,8 @@
                     <el-dialog v-if="showMode"
                                v-model="showMode" align-center
                                title="识别模式">
-                        <TableModeView :table="editingRect"></TableModeView>
+                        <TableModeView :options="modes" :placeholder="modePlaceholder"
+                                       :table="editingRect"></TableModeView>
                     </el-dialog>
                 </el-container>
             </el-container>
@@ -175,6 +245,11 @@ import {Size} from '@/utils/drawing/size';
 import {Table} from "@/models/table";
 
 export default {
+    computed: {
+        Rect() {
+            return Rect
+        }
+    },
     components: {
         DraggableRect,
         DraggableTable,
@@ -189,6 +264,15 @@ export default {
             this.viewerSize = new Size(view.offsetWidth, view.offsetHeight);
             console.log(this.viewerSize);
         }
+        window.onwheel = this.mouseWheel;
+        window.onkeydown = this.keyDown;
+        window.onkeyup = this.keyUp;
+    },
+    beforeUnmount() {
+        window.onresize = null;
+        window.onwheel = null;
+        window.onkeydown = null;
+        window.onkeyup = null;
     },
     data() {
         window.Rect = Rect;
@@ -197,10 +281,40 @@ export default {
             showInfo: false,
             showViewer: false,
             drawer: true,
+            modes: [
+                {name: '精准', value: 'precise'},
+                {name: '布尔', value: 'bool'},
+                {name: '字符', value: 'string'}
+            ],
+            modePlaceholder: '空',
+            defaults: {
+                get rect() {
+                    return {
+                        mode: '',
+                        type: 'unit',
+                        region: {
+                            rectangle: new Rect(50, 50, 50, 50)
+                        }
+                    };
+                },
+                get table() {
+                    return {
+                        modes: {
+                            direction: 'vertical',
+                        },
+                        type: 'table',
+                        region: new Table({
+                            rectangle: new Rect(50, 50, 50, 50),
+                            rowDefinitions: [],
+                            columDefinitions: []
+                        }),
+                    };
+                }
+            },
             rects: [
                 {
                     mode: '',
-                    type: 'rect',
+                    type: 'unit',
                     region: {
                         rectangle: new Rect(50, 50, 50, 50)
                     }
@@ -232,12 +346,14 @@ export default {
             ],
             editingRect: null,
             mousePos: new Point(0, 0),
-            viewerSize: new Size(0, 0)
+            viewerSize: new Size(900, 700),
+            scaleUp: 1.1,
+            scaleDown: 0.9,
+            scaling: false,
         };
     },
     methods: {
         /**
-         *
          * @param {MouseEvent} e
          */
         onResizeStart(e) {
@@ -246,7 +362,6 @@ export default {
             this.showViewer = true;
         },
         /**
-         *
          * @param {MouseEvent} e
          */
         onResizing(e) {
@@ -264,12 +379,10 @@ export default {
             }
             console.log(this.editingRect)
         },
-        keydown(...args) {
-            console.log(...args)
-        },
-        removeOne(item){
-            switch (item.type){
-                case 'rect':
+        
+        removeOne(item) {
+            switch (item.type) {
+                case 'unit':
                     this.rects.remove(item);
                     break;
                 case 'table':
@@ -277,6 +390,50 @@ export default {
                     break;
             }
             this.editingRect = null;
+        },
+        keyDown(event) {
+            console.log(event)
+            if (event.key === 'Control') {
+                this.scaling = true;
+            }
+        },
+        keyUp(event) {
+            if (event.key === 'Control') {
+                this.scaling = false;
+            }
+        },
+        mouseWheel(event) {
+            if (!this.scaling) return;
+            if (event.deltaY > 0) {
+                this.viewerSize.scale(this.scaleDown);
+                this.rects.forEach(x => {
+                    x.region.rectangle.scale(this.scaleDown);
+                });
+                this.tables.forEach(x => {
+                    x.region.rectangle.scale(this.scaleDown);
+                    for (let i = 0; i < x.region.rowDefinitions.length; i++) {
+                        x.region.rowDefinitions.insert(i,x.region.rowDefinitions.removeAt(i) * this.scaleDown);
+                    }
+                    for (let i = 0; i < x.region.columDefinitions.length; i++) {
+                        x.region.columDefinitions.insert(i,x.region.columDefinitions.removeAt(i) * this.scaleDown);
+                    }
+                })
+            } else {
+                this.viewerSize.scale(this.scaleUp);
+                this.rects.forEach(x => {
+                    x.region.rectangle.scale(this.scaleUp);
+                });
+                this.tables.forEach(x => {
+                    x.region.rectangle.scale(this.scaleUp);
+                    for (let i = 0; i < x.region.rowDefinitions.length; i++) {
+                        x.region.rowDefinitions.insert(i,x.region.rowDefinitions.removeAt(i) * this.scaleUp);
+                    }
+                    for (let i = 0; i < x.region.columDefinitions.length; i++) {
+                        x.region.columDefinitions.insert(i,x.region.columDefinitions.removeAt(i) * this.scaleUp);
+                    }
+                })
+            }
+            console.log(...arguments);
         }
     }
 }
