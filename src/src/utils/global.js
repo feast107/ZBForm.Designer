@@ -1,3 +1,5 @@
+// noinspection JSVoidFunctionReturnValueUsed
+
 export default (function () {
     let copy = (from, to) => {
         Object.keys(from).forEach((k) => {
@@ -6,7 +8,7 @@ export default (function () {
     };
     /**
      * Remove specified target
-     * @param {Any} item
+     * @param {any} item
      */
     Array.prototype.remove = function (item) {
         let index = this.findIndex((x) => Object.is(x, item));
@@ -16,7 +18,7 @@ export default (function () {
         get: function () {
             let ret;
             if (this instanceof Array) {
-                ret = new Array();
+                ret = [];
                 this.forEach((x) => {
                     ret.push(x);
                 });
@@ -27,7 +29,7 @@ export default (function () {
                     ret.set(k, tmp[k]);
                 });
             } else {
-                ret = new Object();
+                ret = {};
                 ret.__proto__ = this.__proto__;
             }
             copy(this, ret);
@@ -41,11 +43,11 @@ export default (function () {
     Promise.prototype.result = async function () {
         try {
             let ret = await this;
-            if (ret.status == 200) {
+            if (ret.status === 200) {
                 ret = ret.data;
                 let getter = {
                     get: function () {
-                        return this.code == 1;
+                        return this.code === 1;
                     },
                 };
                 Object.defineProperty(ret, "Success", getter);
