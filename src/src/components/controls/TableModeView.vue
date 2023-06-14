@@ -1,6 +1,6 @@
 <template>
     <el-switch
-        size="large" width="60" inline-prompt
+        size="large" width="70" inline-prompt
         active-value="horizontal"
         active-text="横向"
         inactive-value="vertical"
@@ -60,8 +60,8 @@
                         />
                     </el-select>
                     <template #reference>
-                        <el-button v-if="!table.modes.configs?.containsKey(index)" class="but" type="primary"
-                                   @click="()=>{  }">+
+                        <el-button v-if="!table.modes.configs?.containsKey(index)" class="but" type="primary">
+                            +
                         </el-button>
                         <el-button class="but" type="primary">{{ table.modes.configs.get(index).name }}</el-button>
                     </template>
@@ -77,6 +77,41 @@
                 .aggregate(String(),this.mergeString)}`">
                 <div class="fill" v-for="(rect,index) in table.region.getCells()" :key="index">
                     <div class="fill" style="border: 1px solid green;">
+                        <el-popover width="200" :placement="placement" :trigger="trigger">
+                            <template #reference>
+                                <div class="fill"></div>
+                            </template>
+                            <template #default>
+                                <el-descriptions direction="vertical" :column="2" border>
+                                    <el-descriptions-item label="X">
+                                        <el-statistic :value="rect.rectangle.Left * scale"/>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="Y">
+                                        <el-statistic :value="rect.rectangle.Top * scale"/>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="宽">
+                                        <el-statistic :value="rect.rectangle.Width * scale"/>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="高">
+                                        <el-statistic :value="rect.rectangle.Height * scale"/>
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="识别模式">
+                                        <div v-if="table.modes.direction === 'horizontal'">
+                                            <div v-if="table.modes.configs?.containsKey(rect.row)">
+                                                <span>{{ table.modes.configs.get(rect.row).name }}</span>
+                                            </div>
+                                            <span v-else>空</span>
+                                        </div>
+                                        <div v-if="table.modes.direction === 'vertical'">
+                                            <div v-if="table.modes.configs?.containsKey(rect.col)">
+                                                <span>{{ table.modes.configs.get(rect.col).name }}</span>
+                                            </div>
+                                            <span v-else>空</span>
+                                        </div>
+                                    </el-descriptions-item>
+                                </el-descriptions>
+                            </template>
+                        </el-popover>
                     </div>
                 </div>
             </div>
@@ -115,6 +150,10 @@ import {Rect} from "@/utils/drawing/rect";
 
 export default {
     props: {
+        scale: {
+            type: Number,
+            default: 1,
+        },
         table: null,
         options: {
             default: []
@@ -141,7 +180,6 @@ export default {
                 if (n.modes.direction !== o.modes.direction) {
                     //TODO:变了啊
                     this.table.modes.configs = new Map();
-                    console.log(n.modes)
                 }
             }
         }
@@ -151,13 +189,9 @@ export default {
             let arr = [];
             for (let i = 0; i < array.length; i++) {
                 let curr = array[i];
-                if (i === 0) {
-                    arr.push(curr);
-                } else {
-                    arr.push(curr - array[i - 1])
-                }
+                arr.push((curr - (i === 0 ? 0 : array[i - 1])) * this.scale);
             }
-            arr.push(edge - (arr.any() ? array.last() : 0));
+            arr.push((edge - (arr.any() ? array.last() : 0)) * this.scale);
             return arr;
         },
         mergeString: (str, val) => {
@@ -172,7 +206,6 @@ export default {
         },
         setMode(index, mode) {
             this.table.modes.configs.set(index, mode);
-            console.log(this.table.modes.configs);
         },
         removeMode(index) {
             this.table.modes.configs.delete(index);
