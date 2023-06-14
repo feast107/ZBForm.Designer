@@ -16,6 +16,7 @@
 + 单元格坐标实时显示
   ![RowCol](./docs/RowCol.png)
 
-+ 可配置识别模式
++ 可配置识别模式（横纵向
   
   ![Mode](./docs/Mode.png)
+  ![ColMode](./docs/ColMode.png)
