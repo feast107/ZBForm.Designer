@@ -1,12 +1,13 @@
-import { Point } from "./point";
-import { Size } from "./size";
+import {Point} from "./point";
+import {Size} from "./size";
+
 export class Rect {
     /**
-     * 
-     * @param {Number} x 
-     * @param {Number} y 
-     * @param {Number} width 
-     * @param {Number} height 
+     *
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} width
+     * @param {Number} height
      */
     constructor(x, y, width, height) {
         this.x = x;
@@ -133,11 +134,18 @@ export class Rect {
     }
 
     /**
-     * 
-     * @param {Point} position 
+     *
+     * @param {Point} position
      */
-    moveTo(position){
+    moveTo(position) {
         this.x = position.X;
         this.y = position.Y;
+    }
+
+    scale (rate){
+        this.x *= rate;
+        this.y *= rate;
+        this.width *= rate;
+        this.height *= rate;
     }
 }
