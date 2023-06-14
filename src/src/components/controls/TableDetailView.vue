@@ -8,7 +8,7 @@
                 .aggregate(String(),this.mergeString)}`">
             <div v-for="(item,index) in table.region.columDefinitions.concat([table.region.rectangle.Width])"
                  :key="item">
-                <el-button class="fill but" type="primary" @click="()=>{ insertCol(index) }">+</el-button>
+                <el-button class="but" type="primary" @click="()=>{ insertCol(index) }">+</el-button>
             </div>
         </div>
         <div></div>
@@ -19,7 +19,7 @@
                 .aggregate(String(),this.mergeString)}`">
             <div v-for="(item,index) in table.region.rowDefinitions.concat([table.region.rectangle.Height])"
                  :key="item">
-                <el-button class="fill but" type="primary" @click="()=>{ insertRow(index) }">+</el-button>
+                <el-button class="but" type="primary" @click="()=>{ insertRow(index) }">+</el-button>
             </div>
         </div>
         <div style="margin: auto;">
@@ -37,19 +37,19 @@
                             <el-descriptions direction="vertical" :column="2" border>
                                 <el-descriptions-item label="X">
                                     <el-statistic
-                                        :value="item.Left * scale + offset"/>
+                                        :value="item.rectangle.Left * scale + offset"/>
                                 </el-descriptions-item>
                                 <el-descriptions-item label="Y">
                                     <el-statistic
-                                        :value="item.Top * scale + offset"/>
+                                        :value="item.rectangle.Top * scale + offset"/>
                                 </el-descriptions-item>
                                 <el-descriptions-item label="宽">
                                     <el-statistic
-                                        :value="item.Width * scale + offset"/>
+                                        :value="item.rectangle.Width * scale + offset"/>
                                 </el-descriptions-item>
                                 <el-descriptions-item label="高">
                                     <el-statistic
-                                        :value="item.Height * scale + offset"/>
+                                        :value="item.rectangle.Height * scale + offset"/>
                                 </el-descriptions-item>
                             </el-descriptions>
                         </template>
@@ -65,7 +65,7 @@
             <div v-for="(item,index) in table.region.rowDefinitions.concat([table.region.rectangle.Height])"
                  :key="item">
                 <div v-if="index === 0"></div>
-                <el-button v-else class="fill but" type="danger" @click="()=>{ removeRow(index - 1) }">×</el-button>
+                <el-button v-else class="but" type="danger" @click="()=>{ removeRow(index - 1) }">×</el-button>
             </div>
         </div>
         <div></div>
@@ -77,7 +77,7 @@
             <div v-for="(item,index) in table.region.columDefinitions.concat([table.region.rectangle.Width])"
                  :key="item">
                 <div v-if="index === 0"></div>
-                <el-button v-else class="fill but" type="danger" @click="()=>{ removeCol(index - 1) }">×</el-button>
+                <el-button v-else class="but" type="danger" @click="()=>{ removeCol(index - 1) }">×</el-button>
             </div>
         </div>
         <div></div>
@@ -130,46 +130,21 @@ export default {
             return sum += (val + 4);
         },
         getAllCells(region) {
-            let ret = [];
-            console.log(region)
-            for (let row = 0; row <= region.rowDefinitions.length; row++) {
-                let top, height;
-                if (row === region.rowDefinitions.length) {
-                    top = region.rowDefinitions.last() ?? 0;
-                    height = region.rectangle.Height - top;
-                } else {
-                    top = row === 0 ? 0 : region.rowDefinitions[row - 1];
-                    height = region.rowDefinitions[row] - top;
-                }
-                top += region.rectangle.Top;
-                for (let col = 0; col <= region.columDefinitions.length; col++) {
-                    let left, width;
-                    if (col === region.columDefinitions.length) {
-                        left = region.columDefinitions.last() ?? 0;
-                        width = region.rectangle.Width - left;
-                    } else {
-                        left = col === 0 ? 0 : region.columDefinitions[col - 1];
-                        width = region.columDefinitions[col] - left;
-                    }
-                    left += region.rectangle.Left;
-                    ret.push(new Rect(left, top, width, height));
-                }
-            }
-            return ret;
+            return region.getCells();
         },
         insertRow(index) {
             let top = index === 0 ? 0 : this.table.region.rowDefinitions[index - 1];
             let bottom = index === this.table.region.rowDefinitions.length
                 ? this.table.region.rectangle.Height
                 : this.table.region.rowDefinitions[index];
-            this.table.region.rowDefinitions.insert(index, ((top + bottom) / 2));
+            this.table.region.rowDefinitions.insert(index, ((top + bottom) / 2).toFixed().toInt());
         },
         insertCol(index) {
             let left = index === 0 ? 0 : this.table.region.columDefinitions[index - 1];
             let right = index === this.table.region.columDefinitions.length
                 ? this.table.region.rectangle.Width
                 : this.table.region.columDefinitions[index];
-            this.table.region.columDefinitions.insert(index, ((left + right) / 2));
+            this.table.region.columDefinitions.insert(index,(((left + right) / 2).toFixed()).toInt());
         },
         removeRow(index) {
             this.table.region.rowDefinitions.removeAt(index);
@@ -189,6 +164,8 @@ export default {
 }
 
 .but {
+    height: 100%;
+    width: 100%;
     font-size: 20px;
 }
 
