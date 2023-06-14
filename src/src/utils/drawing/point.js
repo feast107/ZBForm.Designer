@@ -1,8 +1,8 @@
 export class Point {
     /**
-     * 
-     * @param {Number} x 
-     * @param {Number} y 
+     *
+     * @param {Number} x
+     * @param {Number} y
      */
     constructor(x, y) {
         this.x = x;
@@ -17,21 +17,26 @@ export class Point {
         return this.y;
     }
 
-    set X(value){
+    set X(value) {
         this.x = value;
     }
 
-    set Y(value){
+    set Y(value) {
         this.y = value;
     }
 
     /**
-     * 
-     * @param {Point} another 
+     *
+     * @param {Point} another
      */
     distanceTo(another) {
-        var xd = this.x - another.x;
-        var yd = this.y - another.y;
+        let xd = this.x - another.x;
+        let yd = this.y - another.y;
         return Math.sqrt(xd * xd + yd * yd);
+    }
+
+    resize(rate){
+        this.x *= rate;
+        this.y *= rate;
     }
 }
