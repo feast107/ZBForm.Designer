@@ -43,6 +43,7 @@
                     <el-aside style="overflow: hidden">
                         <el-card class="box-card" style="height: 100%;" shadow="always">
                             <el-form v-if="this.editingRect != null">
+                                <el-button type="danger" @click="()=>{ removeOne(this.editingRect) }">删除</el-button>
                                 <el-descriptions
                                     title="区域"
                                     style="margin: 10px;"
@@ -135,17 +136,24 @@
                                                       :value="this.editingRect.region.rectangle.RightBottom.Y"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item label="内部单元格">
-                                        <el-button @click="() => editingRect.showInfo = true">查看信息</el-button>
+                                        <el-button @click="() => showInfo = true">设置</el-button>
                                     </el-descriptions-item>
-                                
+                                    <el-descriptions-item label="识别模式">
+                                        <el-button @click="() => showMode = true">设置</el-button>
+                                    </el-descriptions-item>
                                 </el-descriptions>
                             </el-form>
                         </el-card>
                     </el-aside>
-                    <el-dialog v-if="editingRect?.showInfo"
-                               v-model="editingRect.showInfo" align-center
+                    <el-dialog v-if="showInfo"
+                               v-model="showInfo" align-center
                                title="内部单元格">
                         <TableDetailView :table="editingRect"></TableDetailView>
+                    </el-dialog>
+                    <el-dialog v-if="showMode"
+                               v-model="showMode" align-center
+                               title="识别模式">
+                        <TableModeView :table="editingRect"></TableModeView>
                     </el-dialog>
                 </el-container>
             </el-container>
@@ -159,17 +167,20 @@ import TwoPartView from './controls/TwoPartView.vue'
 import DraggableRect from './controls/DraggableRect.vue';
 import DraggableTable from './controls/DraggableTable.vue';
 import TableDetailView from "@/components/controls/TableDetailView.vue";
+import TableModeView from "@/components/controls/TableModeView.vue";
 
 import {Rect} from '@/utils/drawing/rect'
 import {Point} from '@/utils/drawing/point';
 import {Size} from '@/utils/drawing/size';
+import {Table} from "@/models/table";
 
 export default {
     components: {
         DraggableRect,
         DraggableTable,
         TwoPartView,
-        TableDetailView
+        TableDetailView,
+        TableModeView
     },
     created() {
         window.onresize = (e) => {
@@ -182,6 +193,8 @@ export default {
     data() {
         window.Rect = Rect;
         return {
+            showMode: false,
+            showInfo: false,
             showViewer: false,
             drawer: true,
             rects: [
@@ -195,22 +208,26 @@ export default {
             ],
             tables: [
                 {
+                    modes: {
+                        direction: 'vertical',
+                    },
                     type: 'table',
-                    showInfo: false,
-                    region: {
+                    region: new Table({
                         rectangle: new Rect(370, 372, 332, 176),
                         rowDefinitions: [85, 131],
                         columDefinitions: [119, 179]
-                    },
+                    }),
                 },
                 {
+                    modes: {
+                        direction: 'vertical'
+                    },
                     type: 'table',
-                    showInfo: false,
-                    region: {
+                    region: new Table({
                         rectangle: new Rect(300, 400, 100, 100),
                         rowDefinitions: [10, 20, 30],
                         columDefinitions: [10, 20, 30]
-                    },
+                    }),
                 }
             ],
             editingRect: null,
@@ -224,7 +241,6 @@ export default {
          * @param {MouseEvent} e
          */
         onResizeStart(e) {
-            console.log(e)
             const rect = this.$refs.view.getBoundingClientRect();
             this.mousePos = new Point(e.pageX - 105 - rect.left, e.pageY - 105 - rect.top);
             this.showViewer = true;
@@ -247,6 +263,20 @@ export default {
                 this.editingRect = rect;
             }
             console.log(this.editingRect)
+        },
+        keydown(...args) {
+            console.log(...args)
+        },
+        removeOne(item){
+            switch (item.type){
+                case 'rect':
+                    this.rects.remove(item);
+                    break;
+                case 'table':
+                    this.tables.remove(item);
+                    break;
+            }
+            this.editingRect = null;
         }
     }
 }
