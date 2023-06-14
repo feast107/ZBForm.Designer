@@ -4,7 +4,7 @@
             <el-header height="100px">
             
             </el-header>
-            <el-container style="">
+            <el-container>
                 <el-aside width="auto">
                     <el-scrollbar>
                         <el-menu style="--active-color:#3390ef" :collapse="expand"
@@ -44,7 +44,8 @@
                                          height="200">
                                 <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
                                      style="position: relative">
-                                    <div id="Container" class="fill" style="z-index: 50;top:0; left :0;">
+                                    <div id="Container" class="fill" style="z-index: 50;top:0; left :0;"
+                                    >
                                         <DraggableRect v-for="rect in rects" :key="rect"
                                                        style="background-color: #00f3f380;" :rect="rect.region"
                                                        :on-select="()=>this.editRect(rect)"
@@ -62,9 +63,12 @@
                                                         :on-resize-end="onResizeEnd"
                                         ></DraggableTable>
                                     </div>
-                                    <div id="Background" class="fill" style="top:0; position: absolute;">
+                                    <div id="Background" class="fill" style="top:0; position: absolute;"
+                                         :onmousedown="mouseDown">
+                                        <div class="fill" style="user-select: none;pointer-events: none">
                                         <img class="fill" style="user-select: none;pointer-events: none"
                                              src="../assets/background.png" alt=""/>
+                                        </div>
                                     </div>
                                 </div>
                             </TwoPartView>
@@ -89,8 +93,10 @@
                                             </el-icon>
                                             左上
                                         </template>
-                                        <el-statistic prefix="X:" :value="this.editingRect.region.rectangle.LeftTop.X"/>
-                                        <el-statistic prefix="Y:" :value="this.editingRect.region.rectangle.LeftTop.Y"/>
+                                        <el-statistic prefix="X:"
+                                                      :value="this.editingRect.region.rectangle.LeftTop.X* this.revertScale"/>
+                                        <el-statistic prefix="Y:"
+                                                      :value="this.editingRect.region.rectangle.LeftTop.Y* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item>
                                         <template #label>
@@ -100,9 +106,9 @@
                                             右上
                                         </template>
                                         <el-statistic prefix="X:"
-                                                      :value="this.editingRect.region.rectangle.RightTop.X"/>
+                                                      :value="this.editingRect.region.rectangle.RightTop.X* this.revertScale"/>
                                         <el-statistic prefix="Y:"
-                                                      :value="this.editingRect.region.rectangle.RightTop.Y"/>
+                                                      :value="this.editingRect.region.rectangle.RightTop.Y* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item>
                                         <template #label>
@@ -112,9 +118,9 @@
                                             左下
                                         </template>
                                         <el-statistic prefix="X:"
-                                                      :value="this.editingRect.region.rectangle.LeftBottom.X"/>
+                                                      :value="this.editingRect.region.rectangle.LeftBottom.X* this.revertScale"/>
                                         <el-statistic prefix="Y:"
-                                                      :value="this.editingRect.region.rectangle.LeftBottom.Y"/>
+                                                      :value="this.editingRect.region.rectangle.LeftBottom.Y* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item>
                                         <template #label>
@@ -124,15 +130,17 @@
                                             右下
                                         </template>
                                         <el-statistic prefix="X:"
-                                                      :value="this.editingRect.region.rectangle.RightBottom.X"/>
+                                                      :value="this.editingRect.region.rectangle.RightBottom.X* this.revertScale"/>
                                         <el-statistic prefix="Y:"
-                                                      :value="this.editingRect.region.rectangle.RightBottom.Y"/>
+                                                      :value="this.editingRect.region.rectangle.RightBottom.Y* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item label="宽">
-                                        <el-statistic :value="this.editingRect.region.rectangle.Width"/>
+                                        <el-statistic
+                                            :value="this.editingRect.region.rectangle.Width * this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item label="高">
-                                        <el-statistic :value="this.editingRect.region.rectangle.Height"/>
+                                        <el-statistic
+                                            :value="this.editingRect.region.rectangle.Height* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item label="识别模式">
                                         <el-select v-model="this.editingRect.mode" :placeholder="modePlaceholder">
@@ -159,8 +167,10 @@
                                             </el-icon>
                                             左上
                                         </template>
-                                        <el-statistic prefix="X:" :value="this.editingRect.region.rectangle.LeftTop.X"/>
-                                        <el-statistic prefix="Y:" :value="this.editingRect.region.rectangle.LeftTop.Y"/>
+                                        <el-statistic prefix="X:"
+                                                      :value="this.editingRect.region.rectangle.LeftTop.X* this.revertScale"/>
+                                        <el-statistic prefix="Y:"
+                                                      :value="this.editingRect.region.rectangle.LeftTop.Y* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item>
                                         <template #label>
@@ -170,9 +180,9 @@
                                             右下
                                         </template>
                                         <el-statistic prefix="X:"
-                                                      :value="this.editingRect.region.rectangle.RightBottom.X"/>
+                                                      :value="this.editingRect.region.rectangle.RightBottom.X* this.revertScale"/>
                                         <el-statistic prefix="Y:"
-                                                      :value="this.editingRect.region.rectangle.RightBottom.Y"/>
+                                                      :value="this.editingRect.region.rectangle.RightBottom.Y* this.revertScale"/>
                                     </el-descriptions-item>
                                     <el-descriptions-item label="内部单元格">
                                         <el-button @click="() => showInfo = true">设置</el-button>
@@ -187,31 +197,30 @@
                     <el-dialog v-if="showInfo"
                                v-model="showInfo" align-center style="border-radius: 20px"
                                title="内部单元格">
-                        <TableDetailView :table="editingRect"></TableDetailView>
+                        <TableDetailView :scale="this.revertScale" :table="editingRect"></TableDetailView>
                     </el-dialog>
                     <el-dialog v-if="showMode" style="border-radius: 20px"
                                v-model="showMode" align-center
                                title="识别模式">
-                        <TableModeView :options="modes" :placeholder="modePlaceholder"
+                        <TableModeView :scale="this.revertScale" :options="modes" :placeholder="modePlaceholder"
                                        :table="editingRect"></TableModeView>
                     </el-dialog>
                 </el-container>
             </el-container>
         </el-container>
     </div>
-
 </template>
 
 <script>
 import TwoPartView from './controls/TwoPartView.vue'
+import TableModeView from "./controls/TableModeView.vue";
 import DraggableRect from './controls/DraggableRect.vue';
 import DraggableTable from './controls/DraggableTable.vue';
-import TableDetailView from "@/components/controls/TableDetailView.vue";
-import TableModeView from "@/components/controls/TableModeView.vue";
+import TableDetailView from "./controls/TableDetailView.vue";
 
-import {Rect} from '@/utils/drawing/rect'
 import {Point} from '@/utils/drawing/point';
 import {Size} from '@/utils/drawing/size';
+import {Rect} from '@/utils/drawing/rect'
 import {Table} from "@/models/table";
 
 export default {
@@ -230,9 +239,7 @@ export default {
     created() {
         window.onresize = (e) => {
             let view = this.$refs.view;
-            console.log(this.$refs.view)
             this.viewerSize = new Size(view.offsetWidth, view.offsetHeight);
-            console.log(this.viewerSize);
         }
         window.onwheel = this.mouseWheel;
         window.onkeydown = this.keyDown;
@@ -276,8 +283,8 @@ export default {
                         type: 'table',
                         region: new Table({
                             rectangle: new Rect(50, 50, 50, 50),
-                            rowDefinitions: [],
-                            columDefinitions: []
+                            rowDefinitions: [25],
+                            columDefinitions: [25]
                         }),
                     };
                 }
@@ -287,7 +294,7 @@ export default {
                     mode: '',
                     type: 'unit',
                     region: {
-                        rectangle: new Rect(50, 50, 50, 50)
+                        rectangle: new Rect(100, 100, 50, 50)
                     }
                 },
             ],
@@ -303,23 +310,12 @@ export default {
                         columDefinitions: [119, 179]
                     }),
                 },
-                {
-                    modes: {
-                        direction: 'horizontal'
-                    },
-                    type: 'table',
-                    region: new Table({
-                        rectangle: new Rect(300, 400, 100, 100),
-                        rowDefinitions: [10, 20, 30],
-                        columDefinitions: [10, 20, 30]
-                    }),
-                }
             ],
             editingRect: null,
             mousePos: new Point(0, 0),
             viewerSize: new Size(900, 700),
-            scaleUp: 1.1,
-            scaleDown: 0.9,
+            scaleChange: 0.9,
+            revertScale: 1,
             scaling: false,
         };
     },
@@ -348,9 +344,20 @@ export default {
             if (this.editingRect !== rect) {
                 this.editingRect = rect;
             }
-            console.log(this.editingRect)
         },
+        mouseDown(e) {
+            console.log(e);
+            window.onmousemove = this.mouseMove;
+            window.onmouseup = this.mouseUp;
+        },
+        mouseMove(e) {
         
+        },
+        mouseUp(e) {
+            console.log(e)
+            window.onmousemove = null;
+            window.onmouseup = null;
+        },
         removeOne(item) {
             switch (item.type) {
                 case 'unit':
@@ -376,35 +383,36 @@ export default {
         mouseWheel(event) {
             if (!this.scaling) return;
             if (event.deltaY > 0) {
-                this.viewerSize.scale(this.scaleDown);
+                this.viewerSize.scale(this.scaleChange);
                 this.rects.forEach(x => {
-                    x.region.rectangle.scale(this.scaleDown);
+                    x.region.rectangle.scale(this.scaleChange);
                 });
                 this.tables.forEach(x => {
-                    x.region.rectangle.scale(this.scaleDown);
+                    x.region.rectangle.scale(this.scaleChange);
                     for (let i = 0; i < x.region.rowDefinitions.length; i++) {
-                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) * this.scaleDown);
+                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) * this.scaleChange);
                     }
                     for (let i = 0; i < x.region.columDefinitions.length; i++) {
-                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) * this.scaleDown);
+                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) * this.scaleChange);
                     }
                 })
+                this.revertScale /= this.scaleChange;
             } else {
-                this.viewerSize.scale(this.scaleUp);
+                this.viewerSize.scale(1 / this.scaleChange);
                 this.rects.forEach(x => {
-                    x.region.rectangle.scale(this.scaleUp);
+                    x.region.rectangle.scale(1 / this.scaleChange);
                 });
                 this.tables.forEach(x => {
-                    x.region.rectangle.scale(this.scaleUp);
+                    x.region.rectangle.scale(1 / this.scaleChange);
                     for (let i = 0; i < x.region.rowDefinitions.length; i++) {
-                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) * this.scaleUp);
+                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) / this.scaleChange);
                     }
                     for (let i = 0; i < x.region.columDefinitions.length; i++) {
-                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) * this.scaleUp);
+                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) / this.scaleChange);
                     }
                 })
+                this.revertScale *= this.scaleChange;
             }
-            console.log(...arguments);
         }
     }
 }
