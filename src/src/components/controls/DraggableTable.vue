@@ -85,7 +85,6 @@ export default {
         rectangle: {
             deep: true,
             /**
-             *
              * @param {Rect} n
              * @param {Rect} o
              */
