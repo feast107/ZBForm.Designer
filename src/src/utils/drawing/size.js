@@ -19,4 +19,9 @@ export class Size {
     set Height(value) {
         this.height = value;
     }
+
+    scale(rate){
+        this.width *= rate;
+        this.height *= rate;
+    }
 }
