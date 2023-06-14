@@ -1,5 +1,5 @@
 (function () {
-    const KeyValuePair = class {
+    globalThis.KeyValuePair = class {
         constructor(key, value) {
             if (key == null) throw "key is required";
             this.key = key;
@@ -7,7 +7,6 @@
             Object.freeze(this);
         }
     };
-    globalThis.KeyValuePair = KeyValuePair;
     Array.prototype.add ??= function (item) {
         this.push(item);
     };
@@ -31,7 +30,7 @@
         });
     };
     Array.prototype.contains ??= function (item) {
-        return this.findIndex((x) => x == item) > -1;
+        return this.findIndex((x) => x === item) > -1;
     };
     Array.prototype.clear ??= function () {
         while (this.length > 0) {
@@ -65,7 +64,7 @@
     };
     Array.prototype.distinct ??= function (comparer) {
         comparer ??= (left, right) => Object.is(left, right);
-        let ret = new Array();
+        let ret = [];
         this.forEach((x) => {
             if (ret.findIndex((i) => comparer(x, i)) < 0) {
                 ret.push(x);
@@ -77,7 +76,7 @@
         return this.reduce(func, seed);
     };
     Array.prototype.select ??= function (selector) {
-        let ret = new Array();
+        let ret = [];
         this.forEach((x) => {
             ret.push(selector(x));
         });
@@ -141,4 +140,10 @@
         valueGetter(ret);
         return ret != null;
     };
+    String.prototype.toInt ??= function () {
+        return parseInt(this);
+    }
+    String.prototype.toFloat ??= function () {
+        return parseFloat(this);
+    }
 })();
