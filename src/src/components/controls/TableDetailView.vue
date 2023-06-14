@@ -103,19 +103,14 @@ export default {
     },
     methods: {
         rightClick(...args) {
-            console.log(...args)
         },
         getSpace(array, edge) {
             let arr = [];
             for (let i = 0; i < array.length; i++) {
                 let curr = array[i];
-                if (i === 0) {
-                    arr.push(curr);
-                } else {
-                    arr.push(curr - array[i - 1])
-                }
+                arr.push((curr - (i === 0 ? 0 : array[i - 1])) * this.scale);
             }
-            arr.push(edge - (arr.any() ? array.last() : 0));
+            arr.push((edge - (arr.any() ? array.last() : 0)) * this.scale);
             return arr;
         },
         mergeString: (str, val) => {
@@ -140,7 +135,7 @@ export default {
             let right = index === this.table.region.columDefinitions.length
                 ? this.table.region.rectangle.Width
                 : this.table.region.columDefinitions[index];
-            this.table.region.columDefinitions.insert(index,(((left + right) / 2).toFixed()).toInt());
+            this.table.region.columDefinitions.insert(index, (((left + right) / 2).toFixed()).toInt());
         },
         removeRow(index) {
             this.table.region.rowDefinitions.removeAt(index);
