@@ -2,12 +2,12 @@ import {Rect} from "@/utils/drawing/rect";
 
 export class Unit {
     constructor(unit) {
-        this.rectangle = unit
-            ? unit.rectangle.copy
+        this.rectangle = unit != null
+            ? unit.rectangle.clone
             : new Rect(0, 0, 0, 0);
     }
 
-    get individual() {
+    get clone() {
         return new Unit(this);
     }
 }
