@@ -1,10 +1,10 @@
 <template>
     <div class="fill" ref="view">
-        <el-container>
-            <el-header height="100px">
-            
+        <el-container style="height: 98%">
+            <el-header >
+                <div></div>
             </el-header>
-            <el-container>
+            <el-container style="height: 80%">
                 <el-aside width="auto">
                     <el-scrollbar>
                         <el-menu style="--active-color:#3390ef" :collapse="expand"
@@ -38,9 +38,10 @@
                     </el-scrollbar>
                 </el-aside>
                 <el-container>
-                    <el-main style="border: 1px solid yellowgreen;height:700px;width:900px">
-                        <el-scrollbar>
+                    <el-main style="box-shadow: inset 0 0 16px black;height:700px;width:900px">
+                        <el-scrollbar style="background-color: red">
                             <TwoPartView :top="-mousePos.Y" :left="-mousePos.X" :show="showViewer" width="200"
+                                         
                                          height="200">
                                 <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
                                      style="position: relative">
