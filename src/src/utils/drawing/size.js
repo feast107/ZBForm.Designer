@@ -20,8 +20,12 @@ export class Size {
         this.height = value;
     }
 
-    scale(rate){
+    scale(rate) {
         this.width *= rate;
         this.height *= rate;
+    }
+
+    get copy() {
+        return new Size(this.width, this.height);
     }
 }
