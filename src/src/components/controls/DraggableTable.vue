@@ -4,12 +4,12 @@
         <div :onmousedown="mousedown" :onclick="switchDrag" style="height: 100%;width:100%;">
             <div v-for="(col, index) in columDefinitions" :key="col"
                  :onmousedown="(e) => this.editDown(e, (point) => this.colEdit(point, index))"
-                 :style="`left:${col}px;width:${this.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${
+                 :style="`left:${col}px;width:${rectangle.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${
                      rectangle.showDrag ? lineColor : 'black'}`"
                  style="cursor: w-resize;" class="innerBorder"></div>
             <div v-for="(row, index) in rowDefinitions" :key="row"
                  :onmousedown="(e) => this.editDown(e, (point) => this.rowEdit(point, index))"
-                 :style="`top:${row}px;height:${this.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${
+                 :style="`top:${row}px;height:${rectangle.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${
                      rectangle.showDrag ? lineColor : 'black'}`"
                  style="cursor: n-resize;" class="innerBorder"></div>
         </div>
@@ -61,10 +61,13 @@
 <script>
 import {Point} from '@/utils/drawing/point';
 import {Rect} from '@/utils/drawing/rect';
+import {Table} from "@/models/table";
 
 export default {
     props: {
-        rect: null,
+        rect: {
+            type: Table
+        },
         lineColor: {
             type: String,
             default: '#ffab0f'
@@ -90,6 +93,7 @@ export default {
         }
     },
     data() {
+        const rect = this.rect;
         return {
             /**
              * @type {Rect}
@@ -105,11 +109,15 @@ export default {
             /**
              * @type {Number[]}
              */
-            rowDefinitions: this.rect?.rowDefinitions ?? [],
+            get rowDefinitions() {
+                return rect.rowDefinitions;
+            },
             /**
              * @type {Number[]}
              */
-            columDefinitions: this.rect?.columDefinitions ?? []
+            get columDefinitions() {
+                return rect.columDefinitions;
+            }
         }
     },
     mounted() {
@@ -126,14 +134,18 @@ export default {
                     this.change();
                     return;
                 }
-                if (n.Height < this.rowDefinitions.last()) {
-                    this.rowDefinitions[this.columDefinitions.length - 1] = n.Height;
-                    this.rowDefinitions = this.rowDefinitions.orderBy(x => x);
+                for (let i = 0; i < this.rowDefinitions.length; i++) {
+                    if (n.Height < this.rowDefinitions[i]) {
+                        this.rowDefinitions[i] = n.Height - 1;
+                    }
                 }
-                if (n.Width < this.columDefinitions.last()) {
-                    this.columDefinitions[this.columDefinitions.length - 1] = n.Width;
-                    this.columDefinitions = this.columDefinitions.orderBy(x => x);
+                for (let i = 0; i < this.columDefinitions.length; i++) {
+                    if (n.Width < this.columDefinitions[i]) {
+                        this.columDefinitions[i] = n.Width - 1;
+                    }
                 }
+                this.rowDefinitions.orderBy(x => x);
+                this.columDefinitions.orderBy(x => x);
                 this.change();
             }
         },
@@ -288,8 +300,8 @@ export default {
             }
             window.onmouseup = () => {
                 window.onmouseup = null;
-                this.columDefinitions = this.columDefinitions.orderBy(x => x);
-                this.rowDefinitions = this.rowDefinitions.orderBy(x => x);
+                this.columDefinitions.orderBy(x=>x);
+                this.rowDefinitions.orderBy(x=>x);
                 this.editing = false;
                 this.lastPoint = null;
             }
