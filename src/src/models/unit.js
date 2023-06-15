@@ -7,7 +7,7 @@ export class Unit {
             : new Rect(0, 0, 0, 0);
     }
 
-    get copy() {
+    get individual() {
         return new Unit(this);
     }
 }
