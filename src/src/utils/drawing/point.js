@@ -40,7 +40,7 @@ export class Point {
         this.y *= rate;
     }
 
-    get copy(){
+    get clone(){
         return new Point(this.x,this.y);
     }
 }
