@@ -12,8 +12,12 @@ export class UnitConfig {
         this.region = new Unit(other ? other.region : null);
     }
 
-    get copy(){
+    get clone() {
         return new UnitConfig(this);
+    }
+
+    scale(rate = 1) {
+        this.region.rectangle.scale(rate);
     }
 }
 
@@ -23,16 +27,26 @@ export class TableConfig {
         this.modes = other != null
             ? {
                 direction: other.modes.direction,
-                configs: other.modes.configs
+                configs: other.modes.configs?.copy ?? new Map()
             }
             : {
                 direction: 'horizontal',
-                configs: [],
+                configs: new Map(),
             }
         this.region = new Table(other != null ? other.region : null);
     }
 
-    get copy() {
+    get clone() {
         return new TableConfig(this);
+    }
+
+    scale(rate = 1) {
+        this.region.rectangle.scale(rate);
+        for (let i = 0; i < this.region.rowDefinitions.length; i++) {
+            this.region.rowDefinitions.insert(i, this.region.rowDefinitions.removeAt(i) * rate);
+        }
+        for (let i = 0; i < this.region.columDefinitions.length; i++) {
+            this.region.columDefinitions.insert(i, this.region.columDefinitions.removeAt(i) * rate);
+        }
     }
 }
