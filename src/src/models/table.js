@@ -11,6 +11,7 @@ export class Table {
             this.rowDefinitions = [];
             this.rectangle = new Rect(0, 0, 0, 0);
         }
+        this.rectangle.showDrag = false;
     }
 
     getCells(scale = 1) {
