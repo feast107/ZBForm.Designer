@@ -3,9 +3,9 @@ import {Rect} from "@/utils/drawing/rect";
 export class Table {
     constructor(table) {
         if (table) {
-            this.columDefinitions = table.columDefinitions;
-            this.rowDefinitions = table.rowDefinitions;
-            this.rectangle = table.rectangle;
+            this.columDefinitions = table.columDefinitions.copy;
+            this.rowDefinitions = table.rowDefinitions.copy;
+            this.rectangle = table.rectangle.copy;
         } else {
             this.columDefinitions = [];
             this.rowDefinitions = [];
@@ -53,5 +53,9 @@ export class Table {
             ret.push(cache);
         }
         return ret;
+    }
+
+    copy(){
+        return new Table(this);
     }
 }
