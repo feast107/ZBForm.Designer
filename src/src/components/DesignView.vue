@@ -64,7 +64,7 @@
                                                             :on-resize-end="onResizeEnd"
                                             ></DraggableTable>
                                         </div>
-                                      
+                                    
                                     </div>
                                     <div id="Background" class="fill" style="top:0; position: absolute;"
                                          :onmousedown="mouseDown">
@@ -319,6 +319,7 @@ export default {
             revertScale: 1,
             scaling: false,
             copiedRect: null,
+            lastClickPos: null,
         };
     },
     methods: {
@@ -346,24 +347,31 @@ export default {
             if (this.editingRect !== rect) {
                 this.editingRect = rect;
             }
+            this.configs.forEach(x => {
+                if (x !== rect) {
+                    x.region.rectangle.showDrag = false;
+                }
+            })
         },
         mouseDown(e) {
-            console.log(e);
             window.onmousemove = this.mouseMove;
             window.onmouseup = this.mouseUp;
             this.editingRect = null;
+            this.configs.forEach(x => {
+                x.region.rectangle.showDrag = false;
+            })
+            this.lastClickPos = new Point(e.offsetX, e.offsetY)
         },
         mouseMove(e) {
         
         },
         mouseUp(e) {
-            console.log(e)
             window.onmousemove = null;
             window.onmouseup = null;
         },
         removeOne(item) {
             this.configs.remove(item);
-            if(this.copiedRect === item){
+            if (this.copiedRect === item) {
                 this.copiedRect = null;
             }
             this.editingRect = null;
@@ -374,6 +382,8 @@ export default {
             }
             console.log(event.key)
             if (event.key === 'Delete') {
+                if (this.editingRect == null) return;
+                this.removeOne(this.editingRect);
             }
             if (this.scaling) {
                 if (event.key === 'c') {
@@ -386,7 +396,11 @@ export default {
                 }
                 if (event.key === 'v') {
                     if (this.copiedRect != null) {
-                        this.configs.push(this.copiedRect.clone);
+                        let clone = this.copiedRect.clone;
+                        this.configs.push(clone);
+                        if (this.lastClickPos != null) {
+                            clone.region.rectangle.moveTo(this.lastClickPos);
+                        }
                         this.$message.success(`粘贴成功`);
                     } else {
                         this.$message.warning(`没有复制的对象`);
