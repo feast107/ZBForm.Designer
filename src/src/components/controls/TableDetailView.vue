@@ -96,6 +96,8 @@ export default {
         }
     },
     data() {
+        this.table.region.columDefinitions.orderBy(x=>x);
+        this.table.region.rowDefinitions.orderBy(x=>x);
         return {
             placement: 'top-end',
             trigger: 'click'
@@ -105,6 +107,7 @@ export default {
         rightClick(...args) {
         },
         getSpace(array, edge) {
+            console.log(array);
             let arr = [];
             for (let i = 0; i < array.length; i++) {
                 let curr = array[i];
