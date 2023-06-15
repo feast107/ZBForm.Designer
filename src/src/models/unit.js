@@ -5,6 +5,7 @@ export class Unit {
         this.rectangle = unit != null
             ? unit.rectangle.clone
             : new Rect(0, 0, 0, 0);
+        this.rectangle.showDrag = false;
     }
 
     get clone() {
