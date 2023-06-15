@@ -148,7 +148,7 @@ export class Rect {
         this.height *= rate;
     }
 
-    get copy() {
+    get clone() {
         return new Rect(this.x, this.y, this.width, this.height);
     }
 }
