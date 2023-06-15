@@ -28,9 +28,9 @@
                                 </template>
                                 <el-menu-item style="padding: 0 20px">
                                     <el-space>
-                                        <el-button @click="e=>rects.push(defaults.rect)">单元
+                                        <el-button @click="e=>configs.push(defaults.rect)">单元
                                         </el-button>
-                                        <el-button @click="e=>tables.push(defaults.table)">表格</el-button>
+                                        <el-button @click="e=>configs.push(defaults.table)">表格</el-button>
                                     </el-space>
                                 </el-menu-item>
                             </el-sub-menu>
@@ -46,22 +46,25 @@
                                      style="position: relative">
                                     <div id="Container" class="fill" style="z-index: 50;top:0; left :0;"
                                     >
-                                        <DraggableRect v-for="rect in rects" :key="rect"
-                                                       style="background-color: #00f3f380;" :rect="rect.region"
-                                                       :on-select="()=>this.editRect(rect)"
-                                                       :on-changed="rectChanged"
-                                                       :on-resize-start="onResizeStart"
-                                                       :on-resizing="onResizing"
-                                                       :on-resize-end="onResizeEnd">
-                                        </DraggableRect>
-                                        <DraggableTable v-for="table in tables" :key="table"
-                                                        style="background-color: #33f3a380;" :rect="table.region"
-                                                        :on-select="()=>this.editRect(table)"
-                                                        :on-changed="rectChanged"
-                                                        :on-resize-start="onResizeStart"
-                                                        :on-resizing="onResizing"
-                                                        :on-resize-end="onResizeEnd"
-                                        ></DraggableTable>
+                                        <div v-for="config in configs" :key="config">
+                                            <DraggableRect v-if="config.type === 'unit'"
+                                                           style="background-color: #00f3f380;" :rect="config.region"
+                                                           :on-select="()=>this.editRect(config)"
+                                                           :on-changed="rectChanged"
+                                                           :on-resize-start="onResizeStart"
+                                                           :on-resizing="onResizing"
+                                                           :on-resize-end="onResizeEnd">
+                                            </DraggableRect>
+                                            <DraggableTable v-if="config.type === 'table'"
+                                                            style="background-color: #33f3a380;" :rect="config.region"
+                                                            :on-select="()=>this.editRect(config)"
+                                                            :on-changed="rectChanged"
+                                                            :on-resize-start="onResizeStart"
+                                                            :on-resizing="onResizing"
+                                                            :on-resize-end="onResizeEnd"
+                                            ></DraggableTable>
+                                        </div>
+                                      
                                     </div>
                                     <div id="Background" class="fill" style="top:0; position: absolute;"
                                          :onmousedown="mouseDown">
@@ -278,7 +281,7 @@ export default {
                     return new TableConfig({
                         modes: {
                             direction: 'horizontal',
-                            configs: [],
+                            configs: new Map(),
                         },
                         type: 'table',
                         region: new Table({
@@ -289,16 +292,7 @@ export default {
                     })
                 }
             },
-            rects: [
-                new UnitConfig({
-                    mode: '',
-                    type: 'unit',
-                    region: new Unit({
-                        rectangle: new Rect(100, 100, 50, 50)
-                    })
-                })
-            ],
-            tables: [
+            configs: [
                 new TableConfig({
                     modes: {
                         direction: 'horizontal',
@@ -310,6 +304,13 @@ export default {
                         columDefinitions: [119, 179]
                     }),
                 }),
+                new UnitConfig({
+                    mode: '',
+                    type: 'unit',
+                    region: new Unit({
+                        rectangle: new Rect(100, 100, 50, 50)
+                    })
+                })
             ],
             editingRect: null,
             mousePos: new Point(0, 0),
@@ -361,19 +362,18 @@ export default {
             window.onmouseup = null;
         },
         removeOne(item) {
-            switch (item.type) {
-                case 'unit':
-                    this.rects.remove(item);
-                    break;
-                case 'table':
-                    this.tables.remove(item);
-                    break;
+            this.configs.remove(item);
+            if(this.copiedRect === item){
+                this.copiedRect = null;
             }
             this.editingRect = null;
         },
         keyDown(event) {
             if (event.key === 'Control') {
                 this.scaling = true;
+            }
+            console.log(event.key)
+            if (event.key === 'Delete') {
             }
             if (this.scaling) {
                 if (event.key === 'c') {
@@ -386,14 +386,7 @@ export default {
                 }
                 if (event.key === 'v') {
                     if (this.copiedRect != null) {
-                        switch (this.copiedRect.type) {
-                            case 'unit':
-                                this.rects.push(this.copiedRect.copy);
-                                break;
-                            case 'table':
-                                this.tables.push(this.copiedRect.copy);
-                                break;
-                        }
+                        this.configs.push(this.copiedRect.clone);
                         this.$message.success(`粘贴成功`);
                     } else {
                         this.$message.warning(`没有复制的对象`);
@@ -411,33 +404,11 @@ export default {
             if (!this.scaling) return;
             if (event.deltaY > 0) {
                 this.viewerSize.scale(this.scaleChange);
-                this.rects.forEach(x => {
-                    x.region.rectangle.scale(this.scaleChange);
-                });
-                this.tables.forEach(x => {
-                    x.region.rectangle.scale(this.scaleChange);
-                    for (let i = 0; i < x.region.rowDefinitions.length; i++) {
-                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) * this.scaleChange);
-                    }
-                    for (let i = 0; i < x.region.columDefinitions.length; i++) {
-                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) * this.scaleChange);
-                    }
-                })
+                this.configs.forEach(x => x.scale(this.scaleChange));
                 this.revertScale /= this.scaleChange;
             } else {
                 this.viewerSize.scale(1 / this.scaleChange);
-                this.rects.forEach(x => {
-                    x.region.rectangle.scale(1 / this.scaleChange);
-                });
-                this.tables.forEach(x => {
-                    x.region.rectangle.scale(1 / this.scaleChange);
-                    for (let i = 0; i < x.region.rowDefinitions.length; i++) {
-                        x.region.rowDefinitions.insert(i, x.region.rowDefinitions.removeAt(i) / this.scaleChange);
-                    }
-                    for (let i = 0; i < x.region.columDefinitions.length; i++) {
-                        x.region.columDefinitions.insert(i, x.region.columDefinitions.removeAt(i) / this.scaleChange);
-                    }
-                })
+                this.configs.forEach(x => x.scale(1 / this.scaleChange));
                 this.revertScale *= this.scaleChange;
             }
         }
