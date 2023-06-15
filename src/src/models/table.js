@@ -5,7 +5,7 @@ export class Table {
         if (table) {
             this.columDefinitions = table.columDefinitions.copy;
             this.rowDefinitions = table.rowDefinitions.copy;
-            this.rectangle = table.rectangle.copy;
+            this.rectangle = table.rectangle.clone;
         } else {
             this.columDefinitions = [];
             this.rowDefinitions = [];
@@ -55,7 +55,13 @@ export class Table {
         return ret;
     }
 
-    copy(){
+    get clone(){
         return new Table(this);
+    }
+
+    get refRectangle(){
+        const ret = this.clone;
+        ret.rectangle = this.rectangle;
+        return ret;
     }
 }
