@@ -4,7 +4,7 @@
         active-value="horizontal"
         active-text="横向"
         inactive-value="vertical"
-        inactive-text="纵向" @change="_ => this.table.modes.configs = new Map()"
+        inactive-text="纵向" @change="_ => table.modes.configs = new Map()"
         style="--el-switch-on-color: #31acee; --el-switch-off-color: #4ad71b;"
         v-model="table.modes.direction"></el-switch>
     <div class="grid" style="grid-template-columns:1fr auto 1fr;grid-template-rows:1fr auto 1fr;">
@@ -167,6 +167,8 @@ export default {
         if (this.table.modes.configs == null) {
             this.table.modes.configs = new Map();
         }
+        this.table.region.columDefinitions.orderBy(x => x);
+        this.table.region.rowDefinitions.orderBy(x => x);
         return {
             trigger: 'click',
             placement: 'top',
