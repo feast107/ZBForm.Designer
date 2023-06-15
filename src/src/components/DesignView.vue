@@ -66,8 +66,8 @@
                                     <div id="Background" class="fill" style="top:0; position: absolute;"
                                          :onmousedown="mouseDown">
                                         <div class="fill" style="user-select: none;pointer-events: none">
-                                        <img class="fill" style="user-select: none;pointer-events: none"
-                                             src="../assets/background.png" alt=""/>
+                                            <img class="fill" style="user-select: none;pointer-events: none"
+                                                 src="../assets/background.png" alt=""/>
                                         </div>
                                     </div>
                                 </div>
@@ -192,6 +192,7 @@
                                     </el-descriptions-item>
                                 </el-descriptions>
                             </div>
+                            <el-empty v-else description="未选中目标"></el-empty>
                         </el-card>
                     </el-aside>
                     <el-dialog v-if="showInfo"
@@ -222,6 +223,8 @@ import {Point} from '@/utils/drawing/point';
 import {Size} from '@/utils/drawing/size';
 import {Rect} from '@/utils/drawing/rect'
 import {Table} from "@/models/table";
+import {Unit} from "@/models/unit";
+import {UnitConfig, TableConfig} from "@/models/config";
 
 export default {
     computed: {
@@ -237,10 +240,6 @@ export default {
         TableModeView
     },
     created() {
-        window.onresize = (e) => {
-            let view = this.$refs.view;
-            this.viewerSize = new Size(view.offsetWidth, view.offsetHeight);
-        }
         window.onwheel = this.mouseWheel;
         window.onkeydown = this.keyDown;
         window.onkeyup = this.keyUp;
@@ -267,39 +266,40 @@ export default {
             modePlaceholder: '空',
             defaults: {
                 get rect() {
-                    return {
+                    return new UnitConfig({
                         mode: '',
                         type: 'unit',
-                        region: {
+                        region: new Unit({
                             rectangle: new Rect(50, 50, 50, 50)
-                        }
-                    };
+                        })
+                    })
                 },
                 get table() {
-                    return {
+                    return new TableConfig({
                         modes: {
                             direction: 'horizontal',
+                            configs: [],
                         },
                         type: 'table',
                         region: new Table({
                             rectangle: new Rect(50, 50, 50, 50),
                             rowDefinitions: [25],
                             columDefinitions: [25]
-                        }),
-                    };
+                        })
+                    })
                 }
             },
             rects: [
-                {
+                new UnitConfig({
                     mode: '',
                     type: 'unit',
-                    region: {
+                    region: new Unit({
                         rectangle: new Rect(100, 100, 50, 50)
-                    }
-                },
+                    })
+                })
             ],
             tables: [
-                {
+                new TableConfig({
                     modes: {
                         direction: 'horizontal',
                     },
@@ -309,7 +309,7 @@ export default {
                         rowDefinitions: [85, 131],
                         columDefinitions: [119, 179]
                     }),
-                },
+                }),
             ],
             editingRect: null,
             mousePos: new Point(0, 0),
@@ -317,6 +317,7 @@ export default {
             scaleChange: 0.9,
             revertScale: 1,
             scaling: false,
+            copiedRect: null,
         };
     },
     methods: {
@@ -349,6 +350,7 @@ export default {
             console.log(e);
             window.onmousemove = this.mouseMove;
             window.onmouseup = this.mouseUp;
+            this.editingRect = null;
         },
         mouseMove(e) {
         
@@ -370,10 +372,35 @@ export default {
             this.editingRect = null;
         },
         keyDown(event) {
-            console.log(event)
             if (event.key === 'Control') {
                 this.scaling = true;
             }
+            if (this.scaling) {
+                if (event.key === 'c') {
+                    this.copiedRect = this.editingRect;
+                    if (this.editingRect != null) {
+                        this.$message.success(`复制成功`);
+                    } else {
+                        this.$message.warning(`未选择复制目标`);
+                    }
+                }
+                if (event.key === 'v') {
+                    if (this.copiedRect != null) {
+                        switch (this.copiedRect.type) {
+                            case 'unit':
+                                this.rects.push(this.copiedRect.copy);
+                                break;
+                            case 'table':
+                                this.tables.push(this.copiedRect.copy);
+                                break;
+                        }
+                        this.$message.success(`粘贴成功`);
+                    } else {
+                        this.$message.warning(`没有复制的对象`);
+                    }
+                }
+            }
+            
         },
         keyUp(event) {
             if (event.key === 'Control') {
