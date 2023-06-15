@@ -39,4 +39,8 @@ export class Point {
         this.x *= rate;
         this.y *= rate;
     }
+
+    get copy(){
+        return new Point(this.x,this.y);
+    }
 }
