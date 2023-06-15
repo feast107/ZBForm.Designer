@@ -3,7 +3,12 @@
 export default (function () {
     let copy = (from, to) => {
         Object.keys(from).forEach((k) => {
-            to[k] = from[k];
+            let tar = from[k];
+            if(typeof(tar)=='object'){
+                to[k] = tar.copy;
+            }else{
+                to[k] = from[k];
+            }
         });
     };
     /**
