@@ -228,7 +228,7 @@ import {Size} from '@/utils/drawing/size';
 import {Rect} from '@/utils/drawing/rect'
 import {Table} from "@/models/table";
 import {Unit} from "@/models/unit";
-import {UnitConfig, TableConfig} from "@/models/config";
+import {Config, UnitConfig, TableConfig} from "@/models/config";
 
 export default {
     computed: {
@@ -293,6 +293,9 @@ export default {
                     })
                 }
             },
+            /**
+             * @type {Config[]}
+             */
             configs: [
                 new TableConfig({
                     modes: {
