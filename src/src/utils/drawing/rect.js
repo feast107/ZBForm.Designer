@@ -134,7 +134,6 @@ export class Rect {
     }
 
     /**
-     *
      * @param {Point} position
      */
     moveTo(position) {
@@ -142,10 +141,14 @@ export class Rect {
         this.y = position.Y;
     }
 
-    scale (rate){
+    scale(rate) {
         this.x *= rate;
         this.y *= rate;
         this.width *= rate;
         this.height *= rate;
+    }
+
+    get copy() {
+        return new Rect(this.x, this.y, this.width, this.height);
     }
 }
