@@ -2,15 +2,24 @@ import {TemplateItem} from "./template";
 import {Unit} from "@/models/unit";
 import {Table} from "@/models/table";
 
-export class UnitConfig {
+export class Config {
+    constructor(type, region) {
+        this.type = type;
+        this.region = region;
+    }
+
+    get clone() {return null;}
+
+    scale(rate = 1) {}
+}
+
+export class UnitConfig extends Config {
     /**
      * @param other
      */
     constructor(other) {
-        this.type = 'unit';
+        super('unit', other ? other.region.clone : new Unit());
         this.mode = other ? other.mode : '';
-        this.region = other ? other.region.clone : new Unit();
-        this.showDrag = false;
     }
 
     get clone() {
@@ -22,9 +31,9 @@ export class UnitConfig {
     }
 }
 
-export class TableConfig {
+export class TableConfig extends Config {
     constructor(other) {
-        this.type = 'table';
+        super('table', other != null ? other.region.clone : new Table());
         this.modes = other != null
             ? {
                 direction: other.modes.direction,
@@ -34,7 +43,6 @@ export class TableConfig {
                 direction: 'horizontal',
                 configs: new Map(),
             }
-        this.region = other != null ? other.region.clone : new Table();
     }
 
     get clone() {
