@@ -1,6 +1,7 @@
 <template>
     <div >
-        <div class="scale" style="box-shadow: 0 0 15px #808080;margin: 15px "  :style="`display:${ show ? '' : 'none' };height:${height}px;width:${width}px`">
+        <div class="scale" style="box-shadow: 0 0 15px #808080;margin: 15px "
+             :style="`display:${ show ? '' : 'none' };height:${height}px;width:${width}px`">
             <div style="position: absolute;z-index: 70;" :style="`top:${top}px;left:${left}px`">
                 <slot default></slot>
             </div>
