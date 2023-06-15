@@ -9,7 +9,8 @@ export class UnitConfig {
     constructor(other) {
         this.type = 'unit';
         this.mode = other ? other.mode : '';
-        this.region = new Unit(other ? other.region : null);
+        this.region = other ? other.region.clone : new Unit();
+        this.showDrag = false;
     }
 
     get clone() {
@@ -33,7 +34,7 @@ export class TableConfig {
                 direction: 'horizontal',
                 configs: new Map(),
             }
-        this.region = new Table(other != null ? other.region : null);
+        this.region = other != null ? other.region.clone : new Table();
     }
 
     get clone() {
