@@ -83,7 +83,7 @@
         return ret;
     };
     Array.prototype.where ??= function (predicate) {
-        let ret = new Array();
+        let ret = [];
         this.forEach((x) => {
             if (predicate(x)) {
                 ret.push(x);
