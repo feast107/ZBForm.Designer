@@ -25,7 +25,7 @@ export class Size {
         this.height *= rate;
     }
 
-    get copy() {
+    get clone() {
         return new Size(this.width, this.height);
     }
 }
