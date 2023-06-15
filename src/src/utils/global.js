@@ -4,9 +4,9 @@ export default (function () {
     let copy = (from, to) => {
         Object.keys(from).forEach((k) => {
             let tar = from[k];
-            if(typeof(tar)=='object'){
+            if (typeof (tar) == 'object') {
                 to[k] = tar.copy;
-            }else{
+            } else {
                 to[k] = from[k];
             }
         });
@@ -33,6 +33,7 @@ export default (function () {
                 Object.keys(tmp).forEach((k) => {
                     ret.set(k, tmp[k]);
                 });
+                this.forEach((v, k) => ret.set(k, v))
             } else {
                 ret = {};
                 ret.__proto__ = this.__proto__;
@@ -40,7 +41,8 @@ export default (function () {
             copy(this, ret);
             return ret;
         },
-        set: (_) => {},
+        set: (_) => {
+        },
     });
     Date.prototype.timeStamp = function () {
         return this - new Date(1970);
