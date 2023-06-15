@@ -8,9 +8,12 @@ export class Config {
         this.region = region;
     }
 
-    get clone() {return null;}
+    get clone() {
+        return null;
+    }
 
-    scale(rate = 1) {}
+    scale(rate = 1) {
+    }
 }
 
 export class UnitConfig extends Config {
