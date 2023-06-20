@@ -2,12 +2,11 @@
     <div class="fill" ref="view">
         <el-container style="height: 98%">
             <el-header>
-                <div></div>
             </el-header>
             <el-container style="height: 80%">
                 <el-aside width="auto">
                     <el-scrollbar>
-                        <el-menu style="--active-color:#3390ef;" :collapse="expand" :default-openeds="['1']">
+                        <el-menu style="--active-color:#3390ef;" :collapse="!expand" :default-openeds="['1']">
                             <el-menu-item @click="()=> expand = !expand">
                                 <el-icon>
                                     <Expand v-if="expand"/>
@@ -18,29 +17,31 @@
                                     <span v-else>收起</span>
                                 </template>
                             </el-menu-item>
-                            <el-sub-menu style="background-color: #f2f2f2"
-                                         v-for="(menu,index) in menus"
-                                         :key="menu"
-                                         :index="`${index}`">
-                                <template #title>
-                                    <el-icon>
-                                        <component :is="menu.icon"></component>
-                                    </el-icon>
-                                    <span>{{ menu.label }}</span>
-                                </template>
-                                <el-menu-item v-for="item in menu.items" :key="item">
-                                    <el-row :gutter="4" style="width: 100%;margin-right: 10px;">
-                                        <el-col :span="20">
-                                            <span>{{ item.label }}</span>
-                                        </el-col>
-                                        <el-col :span="4">
-                                            <el-button style="vertical-align: center;width: 100%;"
-                                                       :type="menu.style" plain
-                                                       @click="_=>item.event(currentPage?.configs)"/>
-                                        </el-col>
-                                    </el-row>
-                                </el-menu-item>
-                            </el-sub-menu>
+                            <el-menu-item-group>
+                                <el-sub-menu style="background-color: #f2f2f2"
+                                             v-for="(menu,index) in menus"
+                                             :key="menu"
+                                             :index="`${index}`">
+                                    <template #title>
+                                        <el-icon>
+                                            <component :is="menu.icon"></component>
+                                        </el-icon>
+                                        <span>{{ menu.label }}</span>
+                                    </template>
+                                    <el-menu-item v-for="item in menu.items" :key="item">
+                                        <el-row :gutter="4" style="width: 100%;margin-right: 10px;">
+                                            <el-col :span="20">
+                                                <span>{{ item.label }}</span>
+                                            </el-col>
+                                            <el-col :span="4">
+                                                <el-button style="vertical-align: center;width: 100%;"
+                                                           :type="menu.style" plain
+                                                           @click="_=>item.event(currentPage?.configs)"/>
+                                            </el-col>
+                                        </el-row>
+                                    </el-menu-item>
+                                </el-sub-menu>
+                            </el-menu-item-group>
                         </el-menu>
                     </el-scrollbar>
                 </el-aside>
@@ -49,9 +50,14 @@
                         <el-main style="box-shadow: inset 0 0 16px black;">
                             <el-scrollbar v-if="currentPage != null" style="background-color: #c2c2c2">
                                 <TwoPartView :top="-mousePos.Y" :left="-mousePos.X" :show="showViewer"
+                                             
                                              width="200" height="200">
                                     <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
-                                         style="position: relative">
+                                         style="position: relative"
+                                    >
+                                        <div v-show="wrapRegion != null" style="
+                                        position: absolute;top:0;left: 0;width:100%;height:100%;
+                                         z-index: 100" :onmousemove="mouseMove"></div>
                                         <div id="Container" class="fill" style="z-index: 50;top:0; left :0;"
                                         >
                                             <div v-for="config in configs" :key="config">
@@ -59,7 +65,7 @@
                                                                :style="`background-color: ${config.backgroundColor}`"
                                                                :rect="config.region"
                                                                :on-select="()=>this.editRect(config)"
-                                                               :on-changed="rectChanged"
+                                                               :on-changed="(n,o) => rectChanged(config,n,o)"
                                                                :on-resize-start="onResizeStart"
                                                                :on-resizing="onResizing"
                                                                :on-resize-end="onResizeEnd">
@@ -68,13 +74,25 @@
                                                                 :style="`background-color: ${config.backgroundColor}`"
                                                                 :rect="config.region"
                                                                 :on-select="()=>this.editRect(config)"
-                                                                :on-changed="rectChanged"
+                                                                :on-changed="(n,o) => rectChanged(config,n,o)"
                                                                 :on-resize-start="onResizeStart"
                                                                 :on-resizing="onResizing"
                                                                 :on-resize-end="onResizeEnd"
                                                 ></DraggableTable>
                                             </div>
-                                        
+                                            <div v-if="wrapRegion!=null"
+                                                 style="
+                                                 position: absolute;
+                                                 background-color: #00000020;z-index: 100;
+                                                 user-select: none;pointer-events: none"
+                                                 :style="`top:${wrapRegion.Top
+                                                 }px;left:${
+                                                     wrapRegion.Left
+                                                 }px;width:${
+                                                     wrapRegion.Width
+                                                 }px;height:${
+                                                     wrapRegion.Height
+                                                 }px;`"></div>
                                         </div>
                                         <div id="Background" class="fill" style="top:0; position: absolute;"
                                              :onmousedown="mouseDown">
@@ -244,7 +262,6 @@ export default {
         window.onkeydown = this.keyDown;
         window.onkeyup = this.keyUp;
         this.currentPage = this.pages[0];
-        
     },
     beforeUnmount() {
         window.onresize = null;
@@ -252,10 +269,19 @@ export default {
         window.onkeydown = null;
         window.onkeyup = null;
     },
+    watch: {
+        selectTab(n, o) {
+            console.log(n)
+        }
+    },
     data() {
         window.Rect = Rect;
         return {
-            expand: false,
+            /**
+             * @type {Rect}
+             */
+            wrapRegion: null,
+            expand: true,
             showMode: false,
             showInfo: false,
             showViewer: false,
@@ -317,8 +343,7 @@ export default {
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }),
-                    ]
-                ),
+                    ]),
                 new TemplateGroup('操作类', 'Operation', 'success',
                     [
                         new TemplateItem('管理控件', 'manage', '#95ef41',
@@ -373,8 +398,7 @@ export default {
                                 configs.push(UnitConfig.fromTemplate(this))
                                 console.log(this);
                             }),
-                    ]
-                ),
+                    ]),
             ],
             pages: [
                 new Page({
@@ -398,6 +422,7 @@ export default {
                 return this.currentPage?.configs ?? [];
             },
             editingRect: null,
+            selectRects: [],
             mousePos: new Point(0, 0),
             viewerSize: new Size(900, 700),
             scaleChange: 0.9,
@@ -426,12 +451,14 @@ export default {
         onResizeEnd() {
             this.showViewer = false;
         },
-        rectChanged(rectangle) {
+        rectChanged(changer, n, o) {
+        
         },
         editRect(rect) {
             if (this.editingRect !== rect) {
                 this.editingRect = rect;
             }
+            this.selectRects = [rect];
             this.configs.forEach(x => {
                 if (x !== rect) {
                     x.region.rectangle.showDrag = false;
@@ -439,20 +466,40 @@ export default {
             })
         },
         mouseDown(e) {
-            window.onmousemove = this.mouseMove;
             window.onmouseup = this.mouseUp;
             this.editingRect = null;
+            this.wrapRegion = new Rect(e.offsetX, e.offsetY, 0, 0);
             this.configs.forEach(x => {
                 x.region.rectangle.showDrag = false;
             })
             this.lastClickPos = new Point(e.offsetX, e.offsetY)
         },
         mouseMove(e) {
-        
+            if (this.wrapRegion == null) return;
+            let startX = this.lastClickPos.X;
+            let startY = this.lastClickPos.Y;
+            let width = startX - e.offsetX;
+            if (width < 0) width = -width;
+            let height = startY - e.offsetY;
+            if (height < 0) height = -height;
+            this.wrapRegion = new Rect(
+                startX < e.offsetX ? startX : e.offsetX,
+                startY < e.offsetY ? startY : e.offsetY,
+                width, height);
         },
         mouseUp(e) {
             window.onmousemove = null;
             window.onmouseup = null;
+            this.selectRects = [];
+            this.configs.forEach(x => {
+                if (x.region.rectangle.intersect(this.wrapRegion)) {
+                    this.selectRects.add(x);
+                    x.region.rectangle.showDrag = true;
+                }
+            });
+            console.log(this.selectRects);
+            this.wrapRegion = null;
+            this.lastClickPos = null;
         },
         removeOne(item) {
             this.configs.remove(item);
@@ -472,24 +519,25 @@ export default {
             }
             if (this.scaling) {
                 if (event.key === 'c') {
-                    this.copiedRect = this.editingRect;
-                    if (this.editingRect != null) {
-                        this.$message.success(`复制成功`);
+                    this.copiedRect = this.selectRects.copy;
+                    if (this.copiedRect.length > 0) {
+                        this.$message.success(`成功复制${this.copiedRect.length}个目标`);
                     } else {
                         this.$message.warning(`未选择复制目标`);
                     }
                 }
                 if (event.key === 'v') {
-                    if (this.copiedRect != null) {
-                        let clone = this.copiedRect.clone;
-                        this.configs.push(clone);
-                        if (this.lastClickPos != null) {
-                            clone.region.rectangle.moveTo(this.lastClickPos);
-                        }
-                        this.$message.success(`粘贴成功`);
-                    } else {
+                    if (!(this.copiedRect != null && this.copiedRect.length > 0)) {
                         this.$message.warning(`没有复制的对象`);
+                        return;
                     }
+                    this.copiedRect.forEach(x => {
+                        this.configs.push(x);
+                        if (this.lastClickPos != null) {
+                            x.region.rectangle.moveTo(this.lastClickPos);
+                        }
+                    });
+                    this.$message.success(`粘贴成功`);
                 }
             }
             
