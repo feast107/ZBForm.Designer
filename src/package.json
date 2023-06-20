@@ -1,6 +1,6 @@
 {
-  "name": "demo",
-  "productName": "Your product name",
+  "name": "zb-designer",
+  "productName": "表单设计器",
   "version": "0.1.0",
   "private": true,
   "scripts": {
