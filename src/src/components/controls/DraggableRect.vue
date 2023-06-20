@@ -1,7 +1,7 @@
 <template>
     <div style=" position: absolute;" ref="ref"
          :style="`height:${rectangle.Height}px;width:${rectangle.Width}px;top:${rectangle.Top}px;left:${rectangle.Left}px;z-index:${index}`">
-        <div :onmousedown="mousedown" :onclick="switchDrag"  style="height: 100%;width:100%;">
+        <div :onmousedown="mousedown" :onclick="switchDrag" style="height: 100%;width:100%;">
         </div>
         <slot default style=""></slot>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeftTop)" :onmouseup="onResizeUp"
@@ -45,26 +45,26 @@ import {Point} from '@/utils/drawing/point';
 import {Rect} from '@/utils/drawing/rect';
 
 export default {
-    props:{
-        rect : null,
-        borderColor : {
-            type : String,
-            default : '#a0a0a080'
+    props: {
+        rect: null,
+        borderColor: {
+            type: String,
+            default: '#a0a0a080'
         },
-        onResizeStart :{
-            type : Function,
+        onResizeStart: {
+            type: Function,
         },
-        onResizing : {
-            type : Function,
+        onResizing: {
+            type: Function,
         },
-        onResizeEnd : {
-            type : Function,
+        onResizeEnd: {
+            type: Function,
         },
-        onChanged : {
-            type : Function,
+        onChanged: {
+            type: Function,
         },
-        onSelect : {
-            type : Function,
+        onSelect: {
+            type: Function,
         }
     },
     data() {
@@ -85,7 +85,7 @@ export default {
     watch: {
         rectangle: {
             handler(n, o) {
-                this.change();
+                this.change(n, o);
             },
             deep: true
         }
@@ -93,10 +93,8 @@ export default {
     mounted() {
     },
     methods: {
-        change() {
-            this.onChanged?.call(null, {
-                rectangle: this.rectangle,
-            });
+        change(n, o) {
+            this.onChanged?.call(null, n, o);
         },
         /**
          * 切换四角
