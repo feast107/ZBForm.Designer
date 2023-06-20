@@ -4,15 +4,15 @@ module.exports = defineConfig({
     chainWebpack: (config) => {
         config.plugin("html").tap((args) => {
             debugger;
-            args[0].title = "Your program";
+            args[0].title = "ZBDesigner";
             return args;
         });
     },
     pluginOptions: {
         electronBuilder: {
-            name: "your product",
-            appId: "com.organization.program",
-            productName: "Your program",
+            name: "ZBDesigner",
+            appId: "com.zbform.zbdesigner",
+            productName: "ZBDesigner",
             preload: "src/preload.js",
             chainWebpackMainProcess: (_) => {},
         },
