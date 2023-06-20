@@ -151,4 +151,22 @@ export class Rect {
     get clone() {
         return new Rect(this.x, this.y, this.width, this.height);
     }
+
+    get center(){
+        return new Point(this.x + this.width / 2, this.y + this.height / 2);
+    }
+
+    /**
+     * 是否相交
+     * @param {Rect} another
+     */
+    intersect(another){
+        let thisCenter = this.center;
+        let itsCenter = another.center;
+        let xDis = thisCenter.X - itsCenter.X;
+        if(xDis < 0) xDis = -xDis;
+        let yDis = thisCenter.Y - itsCenter.Y;
+        if(yDis < 0) yDis = -yDis;
+        return xDis * 2 < this.width + another.width && yDis * 2 < this.height + another.height;
+    }
 }
