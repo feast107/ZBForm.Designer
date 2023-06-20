@@ -36,9 +36,7 @@ export class Config {
     }
 
     static fromTemplate(template){
-        let ret = TableConfig.default;
-        ret.template = template;
-        return ret;
+        return null;
     }
 }
 
@@ -70,7 +68,7 @@ export class UnitConfig extends Config {
             template,
             mode: '',
             region: new Unit({
-                rectangle: new Rect(50, 50, 50, 50)
+                rectangle: new Rect(100, 100, 50, 50)
             })
         })
     }
@@ -122,9 +120,9 @@ export class TableConfig extends Config {
                 configs: new Map(),
             },
             region: new Table({
-                rectangle: new Rect(50, 50, 50, 50),
-                rowDefinitions: [25],
-                columDefinitions: [25]
+                rectangle: new Rect(100, 100, 100, 100),
+                rowDefinitions: [50],
+                columDefinitions: [50]
             })
         });
     }
