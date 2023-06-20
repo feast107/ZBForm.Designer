@@ -15,10 +15,10 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
     // Create the browser window.
     const win = new BrowserWindow({
-        title: "Your window title",
+        title: "ZBDesigner",
         icon: null, //path.join(__static,"./icon.ico"),
-        width: 800,
-        height: 600,
+        width: 1600,
+        height: 1000,
         fullscreenable: true,
         autoHideMenuBar: true,
         frame: true,
