@@ -130,4 +130,11 @@ export class TableConfig extends Config {
     static fromTemplate(template){
         return TableConfig.default(template);
     }
+
+    static get Horizontal(){
+        return 'horizontal';
+    }
+    static get Vertical(){
+        return 'vertical';
+    }
 }
