@@ -2,14 +2,32 @@
     <div class="fill" ref="view">
         <el-container style="height: 98%">
             <el-header>
-                <el-input-number v-model="this.currentScale"
-                                 :min="25" :max="200" :step="25"
-                                 @change="onScaleChange"/>
+                <el-row style="margin-top: 20px">
+                    <el-col :span="8"></el-col>
+                    <el-col :span="8" style="text-align: center">
+                        <el-input-number v-model="this.currentScale"
+                                         :min="25" :max="200" :step="25"
+                                         @change="onScaleChange"/>
+                    </el-col>
+                    <el-col :span="8" style="text-align: end">
+                        <el-button-group>
+                            <el-button plain type="info" @click="showStats = true">
+                                设计数据
+                            </el-button>
+                            <el-button :disabled="
+                            this.selectRects == null
+                            || this.selectRects.length === 0" plain type="danger"
+                                       @click="_ => { this.delete(); }">
+                                删除所选
+                            </el-button>
+                        </el-button-group>
+                    </el-col>
+                </el-row>
             </el-header>
             <el-container style="height: 80%">
                 <el-aside width="auto">
                     <el-scrollbar>
-                        <el-menu style="--active-color:#3390ef;" :collapse="!expand" :default-openeds="['1']">
+                        <el-menu style="--active-color:#3390ef;" :collapse="!expand" :default-openeds="['0']">
                             <el-menu-item @click="()=> expand = !expand">
                                 <el-icon>
                                     <Expand v-if="expand"/>
@@ -117,10 +135,10 @@
                             />
                         </el-footer>
                     </el-container>
-                    <el-aside style="overflow: hidden">
-                        <el-card class="box-card" style="height: 100%;" shadow="always">
-                            <div v-if="this.editingRect != null">
-                                <el-scrollbar>
+                    <el-aside style="overflow: hidden;height:100%">
+                        <el-scrollbar style="height: 100%">
+                            <el-card class="box-card" style="height: 100%;" shadow="never">
+                                <div v-if="this.editingRect != null">
                                     <el-collapse v-model="actives">
                                         <el-collapse-item title="基本属性" name="1">
                                             <el-form-item label="模板:">
@@ -135,7 +153,7 @@
                                             <el-form-item
                                                 v-if="editingRect.template.type !== 'table'
                                             && editingRect.template.options != null" label="类型:">
-                                                <el-select v-model="this.editingRect.mode"
+                                                <el-select v-model="this.editingRect.region.mode"
                                                            :type="editingRect.template.style"
                                                            :placeholder="modePlaceholder">
                                                     <el-option v-for="item in editingRect.template.options"
@@ -201,10 +219,10 @@
                                             </el-form-item>
                                         </el-collapse-item>
                                     </el-collapse>
-                                </el-scrollbar>
-                            </div>
-                            <el-empty v-else description="未选中目标"></el-empty>
-                        </el-card>
+                                </div>
+                                <el-empty v-else description="未选中目标"></el-empty>
+                            </el-card>
+                        </el-scrollbar>
                     </el-aside>
                     <el-dialog v-if="showInfo"
                                v-model="showInfo" align-center style="border-radius: 20px"
@@ -218,6 +236,19 @@
                                        :options="editingRect.template.options"
                                        :placeholder="modePlaceholder"
                                        :table="editingRect"></TableModeView>
+                    </el-dialog>
+                    <el-dialog v-if="showStats" v-model="showStats" style="border-radius: 20px;width: 70%">
+                        <el-table border stripe :data="stats" row-key="id">
+                            <el-table-column prop="page" label="页码"></el-table-column>
+                            <el-table-column prop="num" label="编号"></el-table-column>
+                            <el-table-column prop="name" label="名称"></el-table-column>
+                            <el-table-column prop="template" label="模板" width="100"></el-table-column>
+                            <el-table-column prop="x" label="X1" width="60"></el-table-column>
+                            <el-table-column prop="y" label="Y1" width="60"></el-table-column>
+                            <el-table-column prop="width" label="宽" width="60"></el-table-column>
+                            <el-table-column prop="height" label="高" width="60"></el-table-column>
+                            <el-table-column prop="mode" label="类型" width="80"></el-table-column>
+                        </el-table>
                     </el-dialog>
                 </el-container>
             </el-container>
@@ -285,6 +316,7 @@ export default {
              */
             wrapRegion: null,
             expand: true,
+            showStats: false,
             showMode: false,
             showInfo: false,
             showViewer: false,
@@ -353,9 +385,7 @@ export default {
                             label: '管理控件',
                             type: 'manage',
                             color: '#95ef4180',
-                            event: function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            },
+                            relate: 'UnitConfig',
                             options: [
                                 {name: '收藏', value: 'star'},
                                 {name: '分享', value: 'share'},
@@ -366,9 +396,7 @@ export default {
                             label: '换页控件',
                             type: 'page',
                             color: '#95ef4180',
-                            event: function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            },
+                            relate: 'UnitConfig',
                             options: [
                                 {name: '上一页', value: 'prev'},
                                 {name: '下一页', value: 'next'},
@@ -379,9 +407,7 @@ export default {
                             label: '模式控件',
                             type: 'mode',
                             color: '#95ef4180',
-                            event: function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            },
+                            relate: 'UnitConfig',
                             options: [
                                 {name: '板书', value: 'board'},
                                 {name: '屏写', value: 'screen'},
@@ -450,6 +476,59 @@ export default {
             scaling: false,
             copiedRect: null,
             lastClickPos: null,
+            get stats() {
+                const ret = [];
+                const page = this.pages.indexOf(this.currentPage) + 1;
+                this.configs.forEach(x => {
+                    let one = {
+                        id: ret.length + 1,
+                        page,
+                        num: x.id,
+                        x: x.region.rectangle.x,
+                        y: x.region.rectangle.y,
+                        width: x.region.rectangle.width,
+                        height: x.region.rectangle.height,
+                        template: x.template.label,
+                        name: x.name,
+                    };
+                    if (x instanceof UnitConfig) {
+                        one.mode = x.region.mode?.name;
+                    }
+                    if (x instanceof TableConfig) {
+                        one.children = [];
+                        let i = 1;
+                        x.region.getCells().forEach(c => {
+                            let mode;
+                            console.log(x.modes)
+                            switch(x.modes.direction){
+                                case TableConfig.Horizontal:
+                                    mode = x.modes.configs.get(c.row)?.name;
+                                    break;
+                                case TableConfig.Vertical:
+                                    mode = x.modes.configs.get(c.col)?.name;
+                                    break;
+                            }
+                            one.children.add({
+                                page,
+                                id: one.id * 10 + i,
+                                num : one.num + '-' + i,
+                                name : `${one.name ?? '表格'} 的 ${c.row+1}行 ${c.col+1}列` ,
+                                template: '子单元格',
+                                x: c.rectangle.x,
+                                y: c.rectangle.y,
+                                width: c.rectangle.width,
+                                height: c.rectangle.height,
+                                mode
+                            })
+                            i++;
+                        })
+                        
+                    }
+                    ret.add(one);
+                });
+                console.log(ret)
+                return ret;
+            }
         };
     },
     methods: {
@@ -514,7 +593,7 @@ export default {
                 startY < e.offsetY ? startY : e.offsetY,
                 width, height);
         },
-        mouseUp(e) {
+        mouseUp(_) {
             window.onmousemove = null;
             window.onmouseup = null;
             this.selectRects = [];
@@ -535,26 +614,30 @@ export default {
             }
             this.editingRect = null;
         },
+        delete() {
+            let i = 0;
+            if (this.editingRect != null) {
+                this.removeOne(this.editingRect);
+                i++;
+            }
+            if (this.selectRects.length > 0) {
+                this.selectRects.forEach(x => {
+                    this.removeOne(x);
+                    i++;
+                })
+            }
+            this.selectRects = [];
+            if (i > 0) {
+                this.$message.success(`成功删除 ${i} 个目标`)
+            }
+        },
         keyDown(event) {
             if (event.key === 'Control') {
                 this.scaling = true;
             }
             console.log(event.key)
             if (event.key === 'Delete') {
-                let i = 0;
-                if (this.editingRect != null) {
-                    this.removeOne(this.editingRect);
-                    i++;
-                }
-                if (this.selectRects.length > 0) {
-                    this.selectRects.forEach(x => {
-                        this.removeOne(x);
-                        i++;
-                    })
-                }
-                if (i > 0) {
-                    this.$message.success(`成功删除 ${i} 个目标`)
-                }
+                this.delete();
             }
             if (this.scaling) {
                 if (event.key === 'c') {
@@ -596,7 +679,8 @@ export default {
         },
         onScaleChange(n, o) {
             console.log(n, o)
-        }
+        },
+        
     }
 }
 </script>
