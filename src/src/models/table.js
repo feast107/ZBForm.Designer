@@ -47,8 +47,8 @@ export class Table {
                         top * scale,
                         width * scale,
                         height * scale),
-                    row: row * scale,
-                    col: col * scale
+                    row,
+                    col
                 });
             }
             ret.push(cache);
