@@ -90,6 +90,9 @@ export default {
         },
         onSelect: {
             type: Function,
+        },
+        onMove: {
+            type: Function,
         }
     },
     data() {
@@ -196,13 +199,16 @@ export default {
         mousemove(e) {
             if (!this.dragging) return;
             this.dragged = true;
-            const left = this.rectangle.Left + e.x - this.lastPoint.x;
-            const top = this.rectangle.Top + e.y - this.lastPoint.y;
+            const offsetX = e.x - this.lastPoint.x;
+            const offsetY =  e.y - this.lastPoint.y;
+            const left = this.rectangle.Left + offsetX;
+            const top = this.rectangle.Top + offsetY;
             if (left < 0 || top < 0) {
                 this.lastPoint = new Point(e.x, e.y);
                 return;
             }
             this.rectangle.moveTo(new Point(left, top));
+            this.onMove?.call(null,new Point(offsetX,offsetY));
             this.lastPoint = new Point(e.x, e.y);
         },
         /**
