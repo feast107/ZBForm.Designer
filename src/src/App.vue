@@ -4,7 +4,6 @@
 
 <script>
 import DesignView from "./components/DesignView.vue";
-import HelloWorld from "./components/HelloWorld.vue";
 
 export default {
     name: "App",
