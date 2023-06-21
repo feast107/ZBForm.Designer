@@ -2,6 +2,9 @@
     <div class="fill" ref="view">
         <el-container style="height: 98%">
             <el-header>
+                <el-input-number v-model="this.currentScale"
+                                 :min="25" :max="200" :step="25"
+                                 @change="onScaleChange"/>
             </el-header>
             <el-container style="height: 80%">
                 <el-aside width="auto">
@@ -65,7 +68,7 @@
                                                                :style="`background-color: ${config.backgroundColor}`"
                                                                :rect="config.region"
                                                                :on-select="()=>this.editRect(config)"
-                                                               :on-changed="(n,o) => rectChanged(config,n,o)"
+                                                               :on-move="(move) => rectChanged(config,move)"
                                                                :on-resize-start="onResizeStart"
                                                                :on-resizing="onResizing"
                                                                :on-resize-end="onResizeEnd">
@@ -74,7 +77,7 @@
                                                                 :style="`background-color: ${config.backgroundColor}`"
                                                                 :rect="config.region"
                                                                 :on-select="()=>this.editRect(config)"
-                                                                :on-changed="(n,o) => rectChanged(config,n,o)"
+                                                                :on-move="(move) => rectChanged(config,move)"
                                                                 :on-resize-start="onResizeStart"
                                                                 :on-resizing="onResizing"
                                                                 :on-resize-end="onResizeEnd"
@@ -290,7 +293,7 @@ export default {
             menus: [
                 new TemplateGroup('单据类', "Ticket", 'primary',
                     [
-                        new TemplateItem('精准控件', 'precise', '#46d7f1',
+                        new TemplateItem('精准控件', 'precise', '#5dc9f180',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }, [
@@ -298,7 +301,7 @@ export default {
                                 {name: '布尔', value: 'bool'},
                                 {name: '字母', value: 'char'}
                             ]),
-                        new TemplateItem('常规控件', 'normal', '#46d7f1',
+                        new TemplateItem('常规控件', 'normal', '#5dc9f180',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }, [
@@ -306,7 +309,7 @@ export default {
                                 {name: '绘图', value: 'draw'},
                                 {name: '身份证', value: 'id'}
                             ]),
-                        new TemplateItem('表格控件', 'table', '#46d7f1',
+                        new TemplateItem('表格控件', 'table', '#5dc9f180',
                             function (configs) {
                                 configs.push(TableConfig.fromTemplate(this))
                             }, [
@@ -314,14 +317,14 @@ export default {
                                 {name: '布尔', value: 'bool'},
                                 {name: '字母', value: 'char'}
                             ]),
-                        new TemplateItem('图形控件', 'graphics', '#46d7f1',
+                        new TemplateItem('图形控件', 'graphics', '#5dc9f180',
                             function (configs) {
-                                configs.push(TableConfig.fromTemplate(this))
+                                configs.push(UnitConfig.fromTemplate(this))
                             }),
                     ]),
                 new TemplateGroup('书写类', 'EditPen', 'warning',
                     [
-                        new TemplateItem('颜色控件', 'color', '#e7b82b',
+                        new TemplateItem('颜色控件', 'color', '#e7b82b80',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }, [
@@ -329,7 +332,7 @@ export default {
                                 {name: '红', value: 'red'},
                                 {name: '蓝', value: 'blue'}
                             ]),
-                        new TemplateItem('粗细控件', 'thickness', '#e7b82b',
+                        new TemplateItem('粗细控件', 'thickness', '#e7b82b80',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }, [
@@ -339,61 +342,76 @@ export default {
                                 {name: '粗', value: '4'},
                                 {name: '极粗', value: '5'}
                             ]),
-                        new TemplateItem('擦除控件', 'erase', '#e7b82b',
+                        new TemplateItem('擦除控件', 'erase', '#e7b82b80',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }),
                     ]),
                 new TemplateGroup('操作类', 'Operation', 'success',
                     [
-                        new TemplateItem('管理控件', 'manage', '#95ef41',
-                            function (configs) {
+                        TemplateItem.from({
+                            label: '管理控件',
+                            type: 'manage',
+                            color: '#95ef4180',
+                            event: function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            },
+                            options: [
                                 {name: '收藏', value: 'star'},
                                 {name: '分享', value: 'share'},
                                 {name: '标签', value: 'tip'},
-                            ]),
-                        new TemplateItem('换页控件', 'page', '#95ef41',
-                            function (configs) {
+                            ]
+                        }),
+                        TemplateItem.from({
+                            label: '换页控件',
+                            type: 'page',
+                            color: '#95ef4180',
+                            event: function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            },
+                            options: [
                                 {name: '上一页', value: 'prev'},
                                 {name: '下一页', value: 'next'},
                                 {name: '新建页', value: 'new'},
-                            ]),
-                        new TemplateItem('模式控件', 'mode', '#95ef41',
-                            function (configs) {
+                            ]
+                        }),
+                        TemplateItem.from({
+                            label: '模式控件',
+                            type: 'mode',
+                            color: '#95ef4180',
+                            event: function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            },
+                            options: [
                                 {name: '板书', value: 'board'},
                                 {name: '屏写', value: 'screen'},
                                 {name: 'PPT', value: 'ppt'},
                                 {name: '鼠标', value: 'mouse'},
                                 {name: '常规', value: 'normal'},
-                            ]),
-                        new TemplateItem('定制控件', 'custom', '#95ef41',
+                            ]
+                        }),
+                        new TemplateItem('定制控件', 'custom', '#95ef4180',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }),
-                        new TemplateItem('录制控件', 'record', '#95ef41',
+                        new TemplateItem('录制控件', 'record', '#95ef4180',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                             }),
                     ]),
                 new TemplateGroup('资源类', 'Box', 'danger',
                     [
-                        new TemplateItem('视频控件', 'video', '#e17861',
+                        new TemplateItem('视频控件', 'video', '#ea977980',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                                 console.log(this);
                             }),
-                        new TemplateItem('音频控件', 'audio', '#e17861',
+                        new TemplateItem('音频控件', 'audio', '#ea977980',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                                 console.log(this);
                             }),
-                        new TemplateItem('音频控件', 'route', '#e17861',
+                        new TemplateItem('音频控件', 'route', '#ea977980',
                             function (configs) {
                                 configs.push(UnitConfig.fromTemplate(this))
                                 console.log(this);
@@ -401,9 +419,10 @@ export default {
                     ]),
             ],
             pages: [
-                new Page({
-                    configs: []
-                }),
+                new Page(
+                    {
+                        configs: []
+                    }),
                 new Page(
                     {
                         configs: []
@@ -425,7 +444,8 @@ export default {
             selectRects: [],
             mousePos: new Point(0, 0),
             viewerSize: new Size(900, 700),
-            scaleChange: 0.9,
+            scaleChange: 0.8,
+            currentScale: 100,
             revertScale: 1,
             scaling: false,
             copiedRect: null,
@@ -451,8 +471,15 @@ export default {
         onResizeEnd() {
             this.showViewer = false;
         },
-        rectChanged(changer, n, o) {
-        
+        rectChanged(changer, move) {
+            changer.region.rectangle.showDrag = true;
+            this.editingRect = changer;
+            if (this.selectRects == null || this.selectRects.length === 0) return;
+            this.selectRects.forEach(x => {
+                if (x !== changer) {
+                    x.region.rectangle.move(move);
+                }
+            })
         },
         editRect(rect) {
             if (this.editingRect !== rect) {
@@ -514,8 +541,20 @@ export default {
             }
             console.log(event.key)
             if (event.key === 'Delete') {
-                if (this.editingRect == null) return;
-                this.removeOne(this.editingRect);
+                let i = 0;
+                if (this.editingRect != null) {
+                    this.removeOne(this.editingRect);
+                    i++;
+                }
+                if (this.selectRects.length > 0) {
+                    this.selectRects.forEach(x => {
+                        this.removeOne(x);
+                        i++;
+                    })
+                }
+                if (i > 0) {
+                    this.$message.success(`成功删除 ${i} 个目标`)
+                }
             }
             if (this.scaling) {
                 if (event.key === 'c') {
@@ -549,15 +588,14 @@ export default {
         },
         mouseWheel(event) {
             if (!this.scaling) return;
-            if (event.deltaY > 0) {
-                this.viewerSize.scale(this.scaleChange);
-                this.configs.forEach(x => x.scale(this.scaleChange));
-                this.revertScale /= this.scaleChange;
-            } else {
-                this.viewerSize.scale(1 / this.scaleChange);
-                this.configs.forEach(x => x.scale(1 / this.scaleChange));
-                this.revertScale *= this.scaleChange;
-            }
+            let change = event.deltaY > 0 ? this.scaleChange : 1 / this.scaleChange;
+            this.viewerSize.scale(change);
+            this.configs.forEach(x => x.scale(change));
+            this.revertScale /= change;
+            this.currentScale /= change;
+        },
+        onScaleChange(n, o) {
+            console.log(n, o)
         }
     }
 }
