@@ -44,6 +44,12 @@ export default (function () {
         set: (_) => {
         },
     });
+    Object.move = (from, to) => {
+        Object.keys(from).forEach(prop => {
+            to[prop] = from[prop];
+        })
+        return to;
+    }
     Date.prototype.timeStamp = function () {
         return this - new Date(1970);
     };
