@@ -141,6 +141,14 @@ export class Rect {
         this.y = position.Y;
     }
 
+    /**
+     * @param {Point} offset
+     */
+    move(offset){
+        this.x += offset.x;
+        this.y += offset.y;
+    }
+
     scale(rate) {
         this.x *= rate;
         this.y *= rate;
