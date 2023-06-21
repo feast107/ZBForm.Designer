@@ -1,4 +1,4 @@
-import {Config} from "@/models/config";
+import {Config, TableConfig, UnitConfig} from "@/models/config";
 
 export class TemplateGroup {
     constructor(label, icon, style, items) {
@@ -23,11 +23,25 @@ export class TemplateItem {
         this.type = type;
         this.color = Config.modifyColor(color)
         this.event = event;
-        this.relate = 'UnitConfig' | 'TableConfig';
         this.options = options;
     }
 
     static from(other) {
         return Object.move(other, new TemplateItem());
+    }
+
+    set relate(value) {
+        switch (value) {
+            case 'UnitConfig' :
+                this.event = function (configs) {
+                    configs.push(UnitConfig.fromTemplate(this))
+                };
+                break;
+            case 'TableConfig' :
+                this.event = function (configs) {
+                    configs.push(TableConfig.fromTemplate(this))
+                };
+                break;
+        }
     }
 }
