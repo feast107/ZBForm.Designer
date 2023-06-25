@@ -50,7 +50,7 @@ export default (function () {
         })
         return to;
     }
-    Date.prototype.timeStamp = function () {
+    Date.prototype.timestamp = function () {
         return this - new Date(1970);
     };
     Promise.prototype.result = async function () {
@@ -78,4 +78,15 @@ export default (function () {
             };
         }
     };
+
+    window.Demo = class{
+        get value(){
+            console.log("this is getter");
+            return new Demo();
+        }
+
+        set value(value){
+            console.log("this is setter");
+        }
+    }
 })();
