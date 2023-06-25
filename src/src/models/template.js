@@ -5,6 +5,9 @@ export class TemplateGroup {
         this.label = label;
         this.icon = icon;
         this.style = style;
+        /**
+         * @type {TemplateItem[]}
+         */
         this.items = items;
         items.forEach(x => {
             x.style = style;
@@ -18,11 +21,15 @@ export class TemplateGroup {
 
 
 export class TemplateItem {
-    constructor(label, type, color, event, options) {
+    constructor(label, type, color, relate, options) {
         this.label = label;
         this.type = type;
-        this.color = Config.modifyColor(color)
-        this.event = event;
+        this.color = Config.modifyColor(color);
+        /**
+         * @type {()=>Config}
+         */
+        this.generate = null;
+        this.relate = relate;
         this.options = options;
     }
 
@@ -33,14 +40,16 @@ export class TemplateItem {
     set relate(value) {
         switch (value) {
             case 'UnitConfig' :
-                this.event = function (configs) {
-                    configs.push(UnitConfig.fromTemplate(this))
+                this.generate = function () {
+                    return UnitConfig.fromTemplate(this);
                 };
                 break;
             case 'TableConfig' :
-                this.event = function (configs) {
-                    configs.push(TableConfig.fromTemplate(this))
+                this.generate = function () {
+                    return TableConfig.fromTemplate(this);
                 };
+                break;
+            default:
                 break;
         }
     }
