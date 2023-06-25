@@ -1,8 +1,8 @@
 <template>
     <div style=" position: absolute;" ref="ref"
          :style="`height:${rectangle.Height}px;width:${rectangle.Width}px;top:${rectangle.Top}px;left:${rectangle.Left}px;z-index:${index}`">
-        <div :onmousedown="mousedown" :onclick="switchDrag" style="height: 100%;width:100%;">
-        </div>
+                <div :onmousedown="mousedown" :onclick="switchDrag" style="height: 100%;width:100%;">
+                </div>
         <slot default style=""></slot>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeftTop)" :onmouseup="onResizeUp"
              style="cursor: nw-resize;"
@@ -68,6 +68,9 @@ export default {
         },
         onMove: {
             type: Function,
+        },
+        onContextMenu:{
+            type : Function,
         }
     },
     data() {
@@ -124,6 +127,9 @@ export default {
             window.onmousemove = null;
             window.onmouseup = null;
             this.index = 1;
+            if(_.button === 2){
+                this.onContextMenu?.call(null,_);
+            }
             setTimeout(() => {
                 this.dragged = false;
             }, 0);
@@ -136,7 +142,7 @@ export default {
             if (!this.dragging) return;
             this.dragged = true;
             const offsetX = e.x - this.lastPoint.x;
-            const offsetY =  e.y - this.lastPoint.y;
+            const offsetY = e.y - this.lastPoint.y;
             const left = this.rectangle.Left + offsetX;
             const top = this.rectangle.Top + offsetY;
             if (left < 0 || top < 0) {
@@ -144,7 +150,7 @@ export default {
                 return;
             }
             this.rectangle.moveTo(new Point(left, top));
-            this.onMove?.call(null,new Point(offsetX,offsetY));
+            this.onMove?.call(null, new Point(offsetX, offsetY));
             this.lastPoint = new Point(e.x, e.y);
         },
         /**
