@@ -14,6 +14,11 @@
 + 框选同步移动
   
     ![Corres](./docs/Corres1.png)![Corres](./docs/Corres2.png)
+
++ 右键对齐
+  
+    ![BeforeAlign](./docs/BeforeAlign.png)
+    ![AfterAlign](./docs/AfterAlign.png)
 + 边角移动时放大镜
 
     ![Resize](./docs/Resize.png)
