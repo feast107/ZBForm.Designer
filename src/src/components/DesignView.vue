@@ -5,8 +5,8 @@
                 <el-row style="margin-top: 20px">
                     <el-col :span="8"></el-col>
                     <el-col :span="8" style="text-align: center">
-                        <el-input-number v-model="this.currentScale"
-                                         :min="25" :max="200" :step="25"
+                        <el-input-number v-model="this.scales.current"
+                                         :min="scales.range[0]" :max="scales.range[1]" :step="scales.step"
                                          @change="onScaleChange"/>
                     </el-col>
                     <el-col :span="8" style="text-align: end">
@@ -57,7 +57,11 @@
                                             <el-col :span="4">
                                                 <el-button style="vertical-align: center;width: 100%;"
                                                            :type="menu.style" plain
-                                                           @click="_=>item.event(currentPage?.configs)"/>
+                                                           @click="_ =>{
+                                                               let config = item.generate();
+                                                               config.scale(1/this.revertScale);
+                                                               currentPage?.configs?.push(config)
+                                                           }"/>
                                             </el-col>
                                         </el-row>
                                     </el-menu-item>
@@ -74,13 +78,43 @@
                                              
                                              width="200" height="200">
                                     <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
-                                         style="position: relative"
-                                    >
+                                         style="position: relative">
                                         <div v-show="wrapRegion != null" style="
                                         position: absolute;top:0;left: 0;width:100%;height:100%;
                                          z-index: 100" :onmousemove="mouseMove"></div>
-                                        <div id="Container" class="fill" style="z-index: 50;top:0; left :0;"
-                                        >
+                                        <el-popover v-if="this.editingRect != null" trigger="contextmenu">
+                                            <template #reference>
+                                                <div style="position: absolute;
+                                                z-index: 200; background-color: transparent;
+                                                user-select: none"
+                                                     @click="this.rightDown = false"
+                                                :style="`left:${this.editingRect.region.rectangle.x
+                                                }px;top:${this.editingRect.region.rectangle.y
+                                                }px;width:${this.editingRect.region.rectangle.Width
+                                                }px;height:${this.editingRect.region.rectangle.Height}px;
+                                                 pointer-events: ${ this.rightDown ? ''  : 'none' };`">
+                                                </div>
+                                            </template>
+                                            <el-button-group>
+                                                <el-button style="width: 100%"
+                                                    @click="_ => { this.alignToThis(this.editingRect,'top') }">
+                                                    上对齐于此
+                                                </el-button>
+                                                <el-button style="width: 100%"
+                                                    @click="_ => { this.alignToThis(this.editingRect,'left') }">
+                                                    左对齐于此
+                                                </el-button>
+                                                <el-button style="width: 100%"
+                                                    @click="_ => { this.alignToThis(this.editingRect,'bottom') }">
+                                                    下对齐于此
+                                                </el-button>
+                                                <el-button style="width: 100%"
+                                                    @click="_ => { this.alignToThis(this.editingRect,'right') }">
+                                                    右对齐于此
+                                                </el-button>
+                                            </el-button-group>
+                                        </el-popover>
+                                        <div id="Container" class="fill" style="z-index: 50;top:0; left :0;">
                                             <div v-for="config in configs" :key="config">
                                                 <DraggableRect v-if="config.type !== 'table'"
                                                                :style="`background-color: ${config.backgroundColor}`"
@@ -88,31 +122,26 @@
                                                                :on-select="()=>this.editRect(config)"
                                                                :on-move="(move) => rectChanged(config,move)"
                                                                :on-resize-start="onResizeStart"
+                                                               :on-context-menu="_ => { this.rightDown = true;this.editingRect = config; }"
                                                                :on-resizing="onResizing"
-                                                               :on-resize-end="onResizeEnd">
-                                                </DraggableRect>
+                                                               :on-resize-end="onResizeEnd"/>
                                                 <DraggableTable v-if="config.type === 'table'"
                                                                 :style="`background-color: ${config.backgroundColor}`"
                                                                 :rect="config.region"
                                                                 :on-select="()=>this.editRect(config)"
                                                                 :on-move="(move) => rectChanged(config,move)"
+                                                                :on-context-menu="_ => { this.rightDown = true;this.editingRect = config; }"
                                                                 :on-resize-start="onResizeStart"
                                                                 :on-resizing="onResizing"
-                                                                :on-resize-end="onResizeEnd"
-                                                ></DraggableTable>
+                                                                :on-resize-end="onResizeEnd"/>
                                             </div>
                                             <div v-if="wrapRegion!=null"
-                                                 style="
-                                                 position: absolute;
-                                                 background-color: #00000020;z-index: 100;
+                                                 style="position: absolute;background-color: #00000020;z-index: 100;
                                                  user-select: none;pointer-events: none"
                                                  :style="`top:${wrapRegion.Top
-                                                 }px;left:${
-                                                     wrapRegion.Left
-                                                 }px;width:${
-                                                     wrapRegion.Width
-                                                 }px;height:${
-                                                     wrapRegion.Height
+                                                 }px;left:${ wrapRegion.Left
+                                                 }px;width:${wrapRegion.Width
+                                                 }px;height:${wrapRegion.Height
                                                  }px;`"></div>
                                         </div>
                                         <div id="Background" class="fill" style="top:0; position: absolute;"
@@ -131,8 +160,7 @@
                                            :background="true"
                                            layout="prev, pager, next, jumper"
                                            :total="pages.length * 10"
-                                           @current-change="val => this.currentPage = pages[val-1]"
-                            />
+                                           @current-change="val => this.currentPage = pages[val-1]"/>
                         </el-footer>
                     </el-container>
                     <el-aside style="overflow: hidden;height:100%">
@@ -237,8 +265,9 @@
                                        :placeholder="modePlaceholder"
                                        :table="editingRect"></TableModeView>
                     </el-dialog>
-                    <el-dialog v-if="showStats" v-model="showStats" style="border-radius: 20px;width: 70%">
-                        <el-table border stripe :data="stats" row-key="id">
+                    <el-dialog v-if="showStats" v-model="showStats"
+                               style="max-height: 80%;border-radius: 20px;width: 70%">
+                        <el-table max-height="500" border stripe :data="stats" row-key="id">
                             <el-table-column prop="page" label="页码"></el-table-column>
                             <el-table-column prop="num" label="编号"></el-table-column>
                             <el-table-column prop="name" label="名称"></el-table-column>
@@ -305,7 +334,15 @@ export default {
     },
     watch: {
         selectTab(n, o) {
-            console.log(n)
+        
+        },
+        currentScale(n, o) {
+            let scale = n / o;
+            this.viewerSize.scale(scale);
+            this.pages.forEach(p => {
+                p.configs.forEach(x => x.scale(scale));
+            });
+            this.revertScale /= scale;
         }
     },
     data() {
@@ -326,48 +363,36 @@ export default {
                 new TemplateGroup('单据类', "Ticket", 'primary',
                     [
                         new TemplateItem('精准控件', 'precise', '#5dc9f180',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            Config.UnitConfig, [
                                 {name: '数值', value: 'number'},
                                 {name: '布尔', value: 'bool'},
                                 {name: '字母', value: 'char'}
                             ]),
                         new TemplateItem('常规控件', 'normal', '#5dc9f180',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            Config.UnitConfig, [
                                 {name: '字符', value: 'string'},
                                 {name: '绘图', value: 'draw'},
                                 {name: '身份证', value: 'id'}
                             ]),
                         new TemplateItem('表格控件', 'table', '#5dc9f180',
-                            function (configs) {
-                                configs.push(TableConfig.fromTemplate(this))
-                            }, [
+                            Config.TableConfig, [
                                 {name: '数值', value: 'number'},
                                 {name: '布尔', value: 'bool'},
                                 {name: '字母', value: 'char'}
                             ]),
                         new TemplateItem('图形控件', 'graphics', '#5dc9f180',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }),
+                            Config.UnitConfig),
                     ]),
                 new TemplateGroup('书写类', 'EditPen', 'warning',
                     [
                         new TemplateItem('颜色控件', 'color', '#e7b82b80',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            Config.UnitConfig, [
                                 {name: '黑', value: 'black'},
                                 {name: '红', value: 'red'},
                                 {name: '蓝', value: 'blue'}
                             ]),
                         new TemplateItem('粗细控件', 'thickness', '#e7b82b80',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }, [
+                            Config.UnitConfig, [
                                 {name: '极细', value: '1'},
                                 {name: '细', value: '2'},
                                 {name: '中等', value: '3'},
@@ -375,9 +400,7 @@ export default {
                                 {name: '极粗', value: '5'}
                             ]),
                         new TemplateItem('擦除控件', 'erase', '#e7b82b80',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }),
+                            Config.UnitConfig),
                     ]),
                 new TemplateGroup('操作类', 'Operation', 'success',
                     [
@@ -385,7 +408,7 @@ export default {
                             label: '管理控件',
                             type: 'manage',
                             color: '#95ef4180',
-                            relate: 'UnitConfig',
+                            relate: Config.UnitConfig,
                             options: [
                                 {name: '收藏', value: 'star'},
                                 {name: '分享', value: 'share'},
@@ -396,7 +419,7 @@ export default {
                             label: '换页控件',
                             type: 'page',
                             color: '#95ef4180',
-                            relate: 'UnitConfig',
+                            relate: Config.UnitConfig,
                             options: [
                                 {name: '上一页', value: 'prev'},
                                 {name: '下一页', value: 'next'},
@@ -407,7 +430,7 @@ export default {
                             label: '模式控件',
                             type: 'mode',
                             color: '#95ef4180',
-                            relate: 'UnitConfig',
+                            relate: Config.UnitConfig,
                             options: [
                                 {name: '板书', value: 'board'},
                                 {name: '屏写', value: 'screen'},
@@ -417,31 +440,18 @@ export default {
                             ]
                         }),
                         new TemplateItem('定制控件', 'custom', '#95ef4180',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }),
+                            Config.UnitConfig),
                         new TemplateItem('录制控件', 'record', '#95ef4180',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                            }),
+                            Config.UnitConfig),
                     ]),
                 new TemplateGroup('资源类', 'Box', 'danger',
                     [
                         new TemplateItem('视频控件', 'video', '#ea977980',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                                console.log(this);
-                            }),
+                            Config.UnitConfig),
                         new TemplateItem('音频控件', 'audio', '#ea977980',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                                console.log(this);
-                            }),
-                        new TemplateItem('音频控件', 'route', '#ea977980',
-                            function (configs) {
-                                configs.push(UnitConfig.fromTemplate(this))
-                                console.log(this);
-                            }),
+                            Config.UnitConfig),
+                        new TemplateItem('路径控件', 'route', '#ea977980',
+                            Config.UnitConfig),
                     ]),
             ],
             pages: [
@@ -470,12 +480,19 @@ export default {
             selectRects: [],
             mousePos: new Point(0, 0),
             viewerSize: new Size(900, 700),
-            scaleChange: 0.8,
-            currentScale: 100,
+            scales: {
+                range: [50, 200],
+                step: 25,
+                current: 100,
+            },
+            get currentScale() {
+                return this.scales.current;
+            },
             revertScale: 1,
             scaling: false,
-            copiedRect: null,
+            copiedRects: null,
             lastClickPos: null,
+            rightDown : false,
             get stats() {
                 const ret = [];
                 const page = this.pages.indexOf(this.currentPage) + 1;
@@ -484,10 +501,10 @@ export default {
                         id: ret.length + 1,
                         page,
                         num: x.id,
-                        x: x.region.rectangle.x,
-                        y: x.region.rectangle.y,
-                        width: x.region.rectangle.width,
-                        height: x.region.rectangle.height,
+                        x: (x.region.rectangle.x * this.revertScale).toFixed(),
+                        y: (x.region.rectangle.y * this.revertScale).toFixed(),
+                        width: (x.region.rectangle.width * this.revertScale).toFixed(),
+                        height: (x.region.rectangle.height * this.revertScale).toFixed(),
                         template: x.template.label,
                         name: x.name,
                     };
@@ -500,7 +517,7 @@ export default {
                         x.region.getCells().forEach(c => {
                             let mode;
                             console.log(x.modes)
-                            switch(x.modes.direction){
+                            switch (x.modes.direction) {
                                 case TableConfig.Horizontal:
                                     mode = x.modes.configs.get(c.row)?.name;
                                     break;
@@ -511,13 +528,13 @@ export default {
                             one.children.add({
                                 page,
                                 id: one.id * 10 + i,
-                                num : one.num + '-' + i,
-                                name : `${one.name ?? '表格'} 的 ${c.row+1}行 ${c.col+1}列` ,
+                                num: one.num + '-' + i,
+                                name: `${one.name ?? '表格'} 的 ${c.row + 1}行 ${c.col + 1}列`,
                                 template: '子单元格',
-                                x: c.rectangle.x,
-                                y: c.rectangle.y,
-                                width: c.rectangle.width,
-                                height: c.rectangle.height,
+                                x: (c.rectangle.x * this.revertScale).toFixed(),
+                                y: (c.rectangle.y * this.revertScale).toFixed(),
+                                width: (c.rectangle.width * this.revertScale).toFixed(),
+                                height: (c.rectangle.height * this.revertScale).toFixed(),
                                 mode
                             })
                             i++;
@@ -532,6 +549,9 @@ export default {
         };
     },
     methods: {
+        log(...args){
+            console.log(...args);
+        },
         /**
          * @param {MouseEvent} e
          */
@@ -574,6 +594,7 @@ export default {
         mouseDown(e) {
             window.onmouseup = this.mouseUp;
             this.editingRect = null;
+            this.rightDown = false;
             this.wrapRegion = new Rect(e.offsetX, e.offsetY, 0, 0);
             this.configs.forEach(x => {
                 x.region.rectangle.showDrag = false;
@@ -609,8 +630,8 @@ export default {
         },
         removeOne(item) {
             this.configs.remove(item);
-            if (this.copiedRect === item) {
-                this.copiedRect = null;
+            if (this.copiedRects === item) {
+                this.copiedRects = null;
             }
             this.editingRect = null;
         },
@@ -618,7 +639,6 @@ export default {
             let i = 0;
             if (this.editingRect != null) {
                 this.removeOne(this.editingRect);
-                i++;
             }
             if (this.selectRects.length > 0) {
                 this.selectRects.forEach(x => {
@@ -641,25 +661,15 @@ export default {
             }
             if (this.scaling) {
                 if (event.key === 'c') {
-                    this.copiedRect = this.selectRects.copy;
-                    if (this.copiedRect.length > 0) {
-                        this.$message.success(`成功复制${this.copiedRect.length}个目标`);
+                    this.copiedRects = this.selectRects.copy;
+                    if (this.copiedRects.length > 0) {
+                        this.$message.success(`成功复制${this.copiedRects.length}个目标`);
                     } else {
                         this.$message.warning(`未选择复制目标`);
                     }
                 }
                 if (event.key === 'v') {
-                    if (!(this.copiedRect != null && this.copiedRect.length > 0)) {
-                        this.$message.warning(`没有复制的对象`);
-                        return;
-                    }
-                    this.copiedRect.forEach(x => {
-                        this.configs.push(x);
-                        if (this.lastClickPos != null) {
-                            x.region.rectangle.moveTo(this.lastClickPos);
-                        }
-                    });
-                    this.$message.success(`粘贴成功`);
+                    this.paste();
                 }
             }
             
@@ -671,16 +681,71 @@ export default {
         },
         mouseWheel(event) {
             if (!this.scaling) return;
-            let change = event.deltaY > 0 ? this.scaleChange : 1 / this.scaleChange;
-            this.viewerSize.scale(change);
-            this.configs.forEach(x => x.scale(change));
-            this.revertScale /= change;
-            this.currentScale /= change;
+            this.scales.current = event.deltaY > 0
+                ? this.scales.current === this.scales.range[0]
+                    ? this.scales.range[0] : this.scales.current - 25
+                : this.scales.current === this.scales.range[1]
+                    ? this.scales.range[1] : this.scales.current + 25
         },
         onScaleChange(n, o) {
             console.log(n, o)
         },
-        
+        paste() {
+            if (!(this.copiedRects != null && this.copiedRects.length > 0)) {
+                this.$message.warning(`没有复制的对象`);
+                return;
+            }
+            this.copiedRects.forEach(x => {
+                let tar = x.clone;
+                tar.scale(1 / this.revertScale);
+                this.configs.push(tar);
+                if (this.lastClickPos != null) {
+                    x.region.rectangle.moveTo(this.lastClickPos);
+                }
+            });
+            this.$message.success(`粘贴成功`);
+        },
+        /**
+         * @param {Config} to
+         * @param {string} direction
+         */
+        alignToThis(to, direction) {
+            if (this.selectRects.length < 1) return;
+            /**
+             * @param {Rect} rect
+             */
+            let move = (rect) => {
+            };
+            switch (direction) {
+                case 'top':
+                    move = (rect) => {
+                        rect.y = to.region.rectangle.y;
+                    };
+                    break;
+                case 'left':
+                    move = (rect) => {
+                        rect.x = to.region.rectangle.x;
+                    };
+                    break;
+                case 'right':
+                    move = (rect) => {
+                        let x = to.region.rectangle.Right - rect.Width;
+                        rect.moveTo(new Point(x, rect.y))
+                    };
+                    break;
+                case 'bottom':
+                    move = (rect) => {
+                        let y = to.region.rectangle.Bottom - rect.Height;
+                        rect.moveTo(new Point(rect.x, y))
+                    };
+                    break;
+            }
+            this.selectRects.forEach(x => {
+                if (x === to) return;
+                move(x.region.rectangle);
+            })
+            to.region.rectangle;
+        },
     }
 }
 </script>
