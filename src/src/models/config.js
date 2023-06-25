@@ -38,6 +38,14 @@ export class Config {
     static fromTemplate(template){
         return null;
     }
+
+    static get UnitConfig(){
+        return "UnitConfig";
+    }
+
+    static get TableConfig(){
+        return "TableConfig";
+    }
 }
 
 export class UnitConfig extends Config {
