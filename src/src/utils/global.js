@@ -1,8 +1,10 @@
 // noinspection JSVoidFunctionReturnValueUsed
 
 export default (function () {
-    let copy = (from, to) => {
-        Object.keys(from).forEach((k) => {
+    let copy ;
+    copy = (from, to) => {
+        let c = copy;
+        Object.keys(from).forEach(k => {
             let tar = from[k];
             if (typeof (tar) == 'object') {
                 to[k] = tar.copy;
