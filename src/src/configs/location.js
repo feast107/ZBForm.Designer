@@ -1,4 +1,4 @@
-const concat = (a,b) => `${a}/${b}`
+const concat = (a, b) => `${a}/${b}`
 
 export class Url {
     static get Domain() {
@@ -8,17 +8,21 @@ export class Url {
     static get authservice() {
         let route = "authservice";
         return {
-            route ,
-            url: concat('',route),
+            route,
+            url: concat('', route),
             get admin() {
                 let url = this.url;
                 let route = 'admin';
                 return {
                     route,
-                    url: concat(url,route),
+                    url: concat(url, route),
                     get queryItem() {
                         let url = this.url
-                        return concat(url,'queryItem');
+                        return concat(url, 'queryItem');
+                    },
+                    get queryFormInfo() {
+                        let url = this.url;
+                        return concat(url, 'queryFormInfo');
                     }
                 };
             }
