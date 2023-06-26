@@ -38,7 +38,7 @@
             <el-container style="height: 80%">
                 <el-aside width="auto">
                     <el-scrollbar>
-                        <el-menu style="--active-color:#3390ef;" :collapse="!expand" :default-openeds="['0']">
+                        <el-menu style="--active-color:#3390ef;" :collapse="!expand" :default-openeds="['0','1','2','3']">
                             <el-menu-item @click="()=> expand = !expand">
                                 <el-icon>
                                     <Expand v-if="expand"/>
@@ -342,12 +342,12 @@
                             <el-table-column prop="page" label="页码"></el-table-column>
                             <el-table-column prop="num" label="编号"></el-table-column>
                             <el-table-column prop="name" label="名称"></el-table-column>
-                            <el-table-column prop="template" label="模板" width="100"></el-table-column>
-                            <el-table-column prop="x" label="X1" width="60"></el-table-column>
-                            <el-table-column prop="y" label="Y1" width="60"></el-table-column>
+                            <el-table-column prop="template.name" label="模板" width="100"></el-table-column>
+                            <el-table-column prop="x" label="X" width="60"></el-table-column>
+                            <el-table-column prop="y" label="Y" width="60"></el-table-column>
                             <el-table-column prop="width" label="宽" width="60"></el-table-column>
                             <el-table-column prop="height" label="高" width="60"></el-table-column>
-                            <el-table-column prop="mode" label="类型" width="80"></el-table-column>
+                            <el-table-column prop="mode.name" label="类型" width="80"></el-table-column>
                         </el-table>
                     </el-dialog>
                 </el-container>
@@ -545,11 +545,11 @@ export default {
                         y: (x.region.rectangle.y * this.revertScale).toFixed(),
                         width: (x.region.rectangle.width * this.revertScale).toFixed(),
                         height: (x.region.rectangle.height * this.revertScale).toFixed(),
-                        template: x.template.label,
+                        template: { name : x.template.label , value : x.template.type },
                         name: x.name,
                     };
                     if (x instanceof UnitConfig) {
-                        one.mode = x.region.mode?.name;
+                        one.mode = x.region.mode;
                     }
                     if (x instanceof TableConfig) {
                         one.children = [];
@@ -570,7 +570,7 @@ export default {
                                 id: one.id * 10 + i,
                                 num: one.num + '-' + i,
                                 name: `${one.name ?? '表格'} 的 ${c.row + 1}行 ${c.col + 1}列`,
-                                template: '子单元格',
+                                template: { name : '子单元格' , value : 'subCell' },
                                 x: (c.rectangle.x * this.revertScale).toFixed(),
                                 y: (c.rectangle.y * this.revertScale).toFixed(),
                                 width: (c.rectangle.width * this.revertScale).toFixed(),
