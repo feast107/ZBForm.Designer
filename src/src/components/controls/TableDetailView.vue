@@ -86,7 +86,7 @@ import {Rect} from "@/utils/drawing/rect";
 export default {
     props: {
         table: null,
-        scale: {
+        scaled: {
             type: Number,
             default: 1,
         },
@@ -98,9 +98,11 @@ export default {
     data() {
         this.table.region.columDefinitions.orderBy(x=>x);
         this.table.region.rowDefinitions.orderBy(x=>x);
+        let scale = this.scaled * 3;
         return {
             placement: 'top-end',
-            trigger: 'click'
+            trigger: 'click',
+            scale
         }
     },
     methods: {
