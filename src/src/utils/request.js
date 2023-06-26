@@ -1,4 +1,7 @@
 import axios from "axios";
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
+axios.defaults.headers.common['secret'] = 'MCop2ofOHLDjpSnea7cIBJWZe5nabD1QxT3Bp97BPGmz8zGpur7GjylqXC0qNdgH';
 /*axios instance*/
 const Request = axios.create({
     /*api的baseURL*/
