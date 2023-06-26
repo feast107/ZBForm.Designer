@@ -88,7 +88,7 @@
                                                 z-index: 200; background-color: transparent;
                                                 user-select: none"
                                                      @click="this.rightDown = false"
-                                                :style="`left:${this.editingRect.region.rectangle.x
+                                                     :style="`left:${this.editingRect.region.rectangle.x
                                                 }px;top:${this.editingRect.region.rectangle.y
                                                 }px;width:${this.editingRect.region.rectangle.Width
                                                 }px;height:${this.editingRect.region.rectangle.Height}px;
@@ -97,19 +97,19 @@
                                             </template>
                                             <el-button-group>
                                                 <el-button style="width: 100%"
-                                                    @click="_ => { this.alignToThis(this.editingRect,'top') }">
+                                                           @click="_ => { this.alignToThis(this.editingRect,'top') }">
                                                     上对齐于此
                                                 </el-button>
                                                 <el-button style="width: 100%"
-                                                    @click="_ => { this.alignToThis(this.editingRect,'left') }">
+                                                           @click="_ => { this.alignToThis(this.editingRect,'left') }">
                                                     左对齐于此
                                                 </el-button>
                                                 <el-button style="width: 100%"
-                                                    @click="_ => { this.alignToThis(this.editingRect,'bottom') }">
+                                                           @click="_ => { this.alignToThis(this.editingRect,'bottom') }">
                                                     下对齐于此
                                                 </el-button>
                                                 <el-button style="width: 100%"
-                                                    @click="_ => { this.alignToThis(this.editingRect,'right') }">
+                                                           @click="_ => { this.alignToThis(this.editingRect,'right') }">
                                                     右对齐于此
                                                 </el-button>
                                             </el-button-group>
@@ -300,6 +300,8 @@ import {Unit} from "@/models/unit";
 import {Config, UnitConfig, TableConfig} from "@/models/config";
 import {Page} from "@/models/page";
 import {TemplateGroup, TemplateItem} from "@/models/template";
+import Request from "@/utils/request";
+import {Url} from "@/configs/location";
 
 export default {
     computed: {
@@ -320,7 +322,17 @@ export default {
         TableDetailView,
         TableModeView
     },
-    created() {
+    async created() {
+        let r = await Request.get(Url.authservice.admin.queryItem);
+        if (r.data.code !== 1) throw '网络不佳';
+        console.log(r.data.data);
+        window.data = r.data.data;
+        let config = [];
+        r.data.data.forEach(c=>{
+            config.push(TemplateGroup.from(c))
+        });
+        console.log(config)
+        this.menus = config;
         window.onwheel = this.mouseWheel;
         window.onkeydown = this.keyDown;
         window.onkeyup = this.keyUp;
@@ -357,6 +369,7 @@ export default {
             showMode: false,
             showInfo: false,
             showViewer: false,
+            showClean : false,
             drawer: true,
             actives: ['1', '2', '3'],
             menus: [
@@ -492,7 +505,7 @@ export default {
             scaling: false,
             copiedRects: null,
             lastClickPos: null,
-            rightDown : false,
+            rightDown: false,
             get stats() {
                 const ret = [];
                 const page = this.pages.indexOf(this.currentPage) + 1;
@@ -549,7 +562,7 @@ export default {
         };
     },
     methods: {
-        log(...args){
+        log(...args) {
             console.log(...args);
         },
         /**
@@ -746,6 +759,9 @@ export default {
             })
             to.region.rectangle;
         },
+        cleanPages(){
+        
+        }
     }
 }
 </script>
