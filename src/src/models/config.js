@@ -4,8 +4,13 @@ import {Table} from "@/models/table";
 import {Rect} from "@/utils/drawing/rect";
 
 export class Config {
+    /**
+     * @param {TemplateItem} template
+     * @param {Unit | Table} region
+     */
     constructor(template, region) {
-        this.id = new Date().getTime()
+        this.id = new Date().getTime();
+        this.name = `${template.type}-${this.id}`;
         this.region = region;
         /**
          * @type {TemplateItem}
@@ -13,37 +18,39 @@ export class Config {
         this.template = template;
     }
 
-    get backgroundColor(){
+    get backgroundColor() {
         return this.template.color;
     }
-    get type(){
+
+    get type() {
         return this.template.type ?? null;
     }
+
     get clone() {
         return null;
     }
 
-    get refRect(){
+    get refRect() {
         return null;
     }
 
     scale(rate = 1) {
     }
 
-    static modifyColor(color){
-        if(!color || color.length === 0) color = "#c2c2c2";
+    static modifyColor(color) {
+        if (!color || color.length === 0) color = "#c2c2c2";
         return color.length === 7 ? color + '80' : color;
     }
 
-    static fromTemplate(template){
+    static fromTemplate(template) {
         return null;
     }
 
-    static get UnitConfig(){
+    static get UnitConfig() {
         return "UnitConfig";
     }
 
-    static get TableConfig(){
+    static get TableConfig() {
         return "TableConfig";
     }
 }
@@ -53,7 +60,7 @@ export class UnitConfig extends Config {
      * @param other
      */
     constructor(other) {
-        super(other?.template,other ? other.region.clone : new Unit());
+        super(other?.template, other ? other.region.clone : new Unit());
         this.mode = other ? other.mode : '';
     }
 
@@ -61,7 +68,7 @@ export class UnitConfig extends Config {
         return new UnitConfig(this);
     }
 
-    get refRect(){
+    get refRect() {
         let ret = new UnitConfig(this);
         ret.region = this.region;
         return ret;
@@ -71,7 +78,7 @@ export class UnitConfig extends Config {
         this.region.rectangle.scale(rate);
     }
 
-    static default(template){
+    static default(template) {
         return new UnitConfig({
             template,
             mode: '',
@@ -81,14 +88,14 @@ export class UnitConfig extends Config {
         })
     }
 
-    static fromTemplate(template){
+    static fromTemplate(template) {
         return UnitConfig.default(template);
     }
 }
 
 export class TableConfig extends Config {
     constructor(other) {
-        super(other?.template,other != null ? other.region.clone : new Table());
+        super(other?.template, other != null ? other.region.clone : new Table());
         this.modes = other != null
             ? {
                 direction: other.modes.direction,
@@ -104,7 +111,7 @@ export class TableConfig extends Config {
         return new TableConfig(this);
     }
 
-    get refRect(){
+    get refRect() {
         let ret = new TableConfig(this);
         ret.region = this.region;
         return ret;
@@ -120,7 +127,7 @@ export class TableConfig extends Config {
         }
     }
 
-    static default(template){
+    static default(template) {
         return new TableConfig({
             template,
             modes: {
@@ -135,14 +142,15 @@ export class TableConfig extends Config {
         });
     }
 
-    static fromTemplate(template){
+    static fromTemplate(template) {
         return TableConfig.default(template);
     }
 
-    static get Horizontal(){
+    static get Horizontal() {
         return 'horizontal';
     }
-    static get Vertical(){
+
+    static get Vertical() {
         return 'vertical';
     }
 }
