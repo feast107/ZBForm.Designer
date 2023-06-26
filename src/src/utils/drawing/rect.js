@@ -160,7 +160,7 @@ export class Rect {
         return new Rect(this.x, this.y, this.width, this.height);
     }
 
-    get center(){
+    get Center(){
         return new Point(this.x + this.width / 2, this.y + this.height / 2);
     }
 
@@ -169,8 +169,8 @@ export class Rect {
      * @param {Rect} another
      */
     intersect(another){
-        let thisCenter = this.center;
-        let itsCenter = another.center;
+        let thisCenter = this.Center;
+        let itsCenter = another.Center;
         let xDis = thisCenter.X - itsCenter.X;
         if(xDis < 0) xDis = -xDis;
         let yDis = thisCenter.Y - itsCenter.Y;
