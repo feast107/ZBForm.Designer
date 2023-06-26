@@ -9,13 +9,18 @@ export class TemplateGroup {
          * @type {TemplateItem[]}
          */
         this.items = items;
-        items.forEach(x => {
+        items?.forEach(x => {
             x.style = style;
         })
     }
 
     static from(other) {
-        return Object.move(other, new TemplateGroup());
+        let ret = Object.move(other, new TemplateGroup());
+        ret.items = other.items.aggregate([],(arr,item)=>{
+            arr.push(TemplateItem.from(item))
+            return arr;
+        })
+        return ret;
     }
 }
 
