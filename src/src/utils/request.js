@@ -6,7 +6,7 @@ axios.defaults.headers.common['secret'] = 'MCop2ofOHLDjpSnea7cIBJWZe5nabD1QxT3Bp
 const Request = axios.create({
     /*api的baseURL*/
     baseURL : "",
-    /*elaps*/
+    /*elapse*/
     timeout: 60000,
 });
 /*request interceptor*/
