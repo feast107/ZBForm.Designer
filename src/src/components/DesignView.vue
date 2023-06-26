@@ -2,8 +2,10 @@
     <div class="fill" ref="view">
         <el-container style="height: 98%">
             <el-header>
-                <el-row style="margin-top: 20px">
-                    <el-col :span="8"></el-col>
+                <el-row style="margin-top: 10px">
+                    <el-col :span="8" >
+                        <el-button style="margin-bottom: 4px" type="success" @click="postResult" size="large">提交</el-button>
+                    </el-col>
                     <el-col :span="8" style="text-align: center">
                         <el-button :disabled="viewport == null" @click="_ => this.fill('horizontal')">水平铺满
                         </el-button>
@@ -338,7 +340,7 @@
                     </el-dialog>
                     <el-dialog v-if="showStats" v-model="showStats"
                                style="max-height: 80%;border-radius: 20px;width: 70%">
-                        <el-table max-height="500" border stripe :data="stats" row-key="id">
+                        <el-table max-height="500" border stripe :data="getStats(this.currentPage)" row-key="id">
                             <el-table-column prop="page" label="页码"></el-table-column>
                             <el-table-column prop="num" label="编号"></el-table-column>
                             <el-table-column prop="name" label="名称"></el-table-column>
@@ -403,7 +405,11 @@ export default {
             config.push(TemplateGroup.from(c))
         });
         let ps = await Request.get(`${Url.authservice.admin.queryFormInfo}?formId=6dcf42ed1f0440a9a43ed1061a1019bf`);
+        /**
+         * @type {Form}
+         */
         let formInfo = ps.data.data;
+        this.relationId = formInfo.formId;
         console.log(formInfo);
         this.viewerSize = new Size(formInfo.pageWidth, formInfo.pageHeight);
         let stable = new Size(formInfo.pageWidth, formInfo.pageHeight);
@@ -422,6 +428,8 @@ export default {
         window.onkeydown = this.keyDown;
         window.onkeyup = this.keyUp;
         this.currentPage = this.pages[0];
+        
+        window.stat = this.postResult;
     },
     beforeUnmount() {
         window.onresize = null;
@@ -445,6 +453,7 @@ export default {
     data() {
         window.Rect = Rect;
         return {
+            relationId : null,
             /**
              * @type {Rect}
              */
@@ -533,59 +542,6 @@ export default {
                 singleOrDouble: 'single',
             },
             viewport: null,
-            get stats() {
-                const ret = [];
-                const page = this.pages.indexOf(this.currentPage) + 1;
-                this.configs.forEach(x => {
-                    let one = {
-                        id: ret.length + 1,
-                        page,
-                        num: x.id,
-                        x: (x.region.rectangle.x * this.revertScale).toFixed(),
-                        y: (x.region.rectangle.y * this.revertScale).toFixed(),
-                        width: (x.region.rectangle.width * this.revertScale).toFixed(),
-                        height: (x.region.rectangle.height * this.revertScale).toFixed(),
-                        template: { name : x.template.label , value : x.template.type },
-                        name: x.name,
-                    };
-                    if (x instanceof UnitConfig) {
-                        one.mode = x.region.mode;
-                    }
-                    if (x instanceof TableConfig) {
-                        one.children = [];
-                        let i = 1;
-                        x.region.getCells().forEach(c => {
-                            let mode;
-                            console.log(x.modes)
-                            switch (x.modes.direction) {
-                                case TableConfig.Horizontal:
-                                    mode = x.modes.configs.get(c.row)?.name;
-                                    break;
-                                case TableConfig.Vertical:
-                                    mode = x.modes.configs.get(c.col)?.name;
-                                    break;
-                            }
-                            one.children.add({
-                                page,
-                                id: one.id * 10 + i,
-                                num: one.num + '-' + i,
-                                name: `${one.name ?? '表格'} 的 ${c.row + 1}行 ${c.col + 1}列`,
-                                template: { name : '子单元格' , value : 'subCell' },
-                                x: (c.rectangle.x * this.revertScale).toFixed(),
-                                y: (c.rectangle.y * this.revertScale).toFixed(),
-                                width: (c.rectangle.width * this.revertScale).toFixed(),
-                                height: (c.rectangle.height * this.revertScale).toFixed(),
-                                mode
-                            })
-                            i++;
-                        })
-                        
-                    }
-                    ret.add(one);
-                });
-                console.log(ret)
-                return ret;
-            }
         };
     },
     mounted() {
@@ -599,6 +555,61 @@ export default {
         }, 100);
     },
     methods: {
+        /**
+         * @param {Page} page
+         * @returns {*[]}
+         */
+        getStats(page){
+            const ret = [];
+            const pageNum = this.pages.indexOf(page) + 1;
+            page.configs.forEach(x => {
+                let one = {
+                    id: ret.length + 1,
+                    page : pageNum,
+                    num: x.id,
+                    x: (x.region.rectangle.x * this.revertScale).toFixed().toInt(),
+                    y: (x.region.rectangle.y * this.revertScale).toFixed().toInt(),
+                    width: (x.region.rectangle.width * this.revertScale).toFixed().toInt(),
+                    height: (x.region.rectangle.height * this.revertScale).toFixed().toInt(),
+                    template: { name : x.template.label , value : x.template.type },
+                    name: x.name,
+                };
+                if (x instanceof UnitConfig) {
+                    one.mode = x.region.mode;
+                }
+                if (x instanceof TableConfig) {
+                    one.children = [];
+                    let i = 1;
+                    x.region.getCells().forEach(c => {
+                        let mode;
+                        switch (x.modes.direction) {
+                            case TableConfig.Horizontal:
+                                mode = x.modes.configs.get(c.row);
+                                break;
+                            case TableConfig.Vertical:
+                                mode = x.modes.configs.get(c.col);
+                                break;
+                        }
+                        one.children.add({
+                            page : pageNum,
+                            id: one.id * 10 + i,
+                            num: one.num + '-' + i,
+                            name: `${one.name ?? '表格'} 的 ${c.row + 1}行 ${c.col + 1}列`,
+                            template: { name : '子单元格' , value : 'subCell' },
+                            x: (c.rectangle.x * this.revertScale).toFixed().toInt(),
+                            y: (c.rectangle.y * this.revertScale).toFixed().toInt(),
+                            width: (c.rectangle.width * this.revertScale).toFixed().toInt(),
+                            height: (c.rectangle.height * this.revertScale).toFixed().toInt(),
+                            mode
+                        })
+                        i++;
+                    })
+                    
+                }
+                ret.add(one);
+            });
+            return ret;
+        },
         fill(direction) {
             let rect = this.viewport.getBoundingClientRect();
             switch (direction) {
@@ -754,9 +765,6 @@ export default {
                 this.selectRects = [config];
             }
         },
-        onScaleChange(n, o) {
-            console.log(n, o)
-        },
         triggerCopy() {
             this.copiedRects = this.selectRects.copy;
             if (this.copiedRects.length > 0) {
@@ -902,6 +910,31 @@ export default {
             this.selectRects = [];
             this.showPaste = false;
             this.$message.success(`成功粘贴了 ${count} 个控件`);
+        },
+        postResult(){
+            let page = 1;
+            const ret = [];
+            this.pages.forEach(p=>{
+                let tmp = this.getStats(p);
+                let configs = [];
+                tmp.forEach(c=>{
+                    if(c.children){
+                        c.children.forEach(cc =>{
+                            configs.push(cc);
+                        })
+                    }else{
+                        configs.push(c)
+                    }
+                });
+                ret.push({
+                    relationId : this.relationId,
+                    page,
+                    configs
+                })
+                page ++;
+            })
+            console.log(ret);
+            return ret;
         }
     }
 }
