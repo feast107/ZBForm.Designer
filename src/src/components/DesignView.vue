@@ -90,7 +90,7 @@
                                           style="background-color: #c2c2c2">
                                 <TwoPartView :top="-mousePos.Y" :left="-mousePos.X" :show="showViewer"
                                              width="200" height="200">
-                                    <div :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
+                                    <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
                                          style="position: relative">
                                         <div v-show="wrapRegion != null" style="
                                         position: absolute;top:0;left: 0;width:100%;height:100%;
