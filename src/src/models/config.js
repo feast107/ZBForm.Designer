@@ -9,7 +9,7 @@ export class Config {
      * @param {Unit | Table} region
      */
     constructor(template, region) {
-        this.id = new Date().getTime();
+        this.id = new Date().getTime().toString().substring(4);
         this.name = `${template.type}-${this.id}`;
         this.region = region;
         /**
@@ -83,7 +83,7 @@ export class UnitConfig extends Config {
             template,
             mode: '',
             region: new Unit({
-                rectangle: new Rect(100, 100, 50, 50)
+                rectangle: new Rect(50, 50, 30, 30)
             })
         })
     }
@@ -135,9 +135,9 @@ export class TableConfig extends Config {
                 configs: new Map(),
             },
             region: new Table({
-                rectangle: new Rect(100, 100, 100, 100),
-                rowDefinitions: [50],
-                columDefinitions: [50]
+                rectangle: new Rect(50, 50, 30, 30),
+                rowDefinitions: [15],
+                columDefinitions: [15]
             })
         });
     }
