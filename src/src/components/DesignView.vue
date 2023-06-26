@@ -14,6 +14,15 @@
                             <el-button plain type="info" @click="showStats = true">
                                 设计数据
                             </el-button>
+                            <el-button plain type="warning" @click="_ => { this.cleanPages(); }">
+                                按页清空
+                            </el-button>
+                            <el-button :disabled="
+                            this.selectRects == null
+                            || this.selectRects.length === 0" plain type="success"
+                                       @click="_ => { this.pastePages(); }">
+                                按页粘贴
+                            </el-button>
                             <el-button :disabled="
                             this.selectRects == null
                             || this.selectRects.length === 0" plain type="danger"
@@ -96,21 +105,16 @@
                                                 </div>
                                             </template>
                                             <el-button-group>
-                                                <el-button style="width: 100%"
-                                                           @click="_ => { this.alignToThis(this.editingRect,'top') }">
-                                                    上对齐于此
+                                                <el-button @click="triggerCopy" style="width: 100%" type="primary">
+                                                    复制
                                                 </el-button>
-                                                <el-button style="width: 100%"
-                                                           @click="_ => { this.alignToThis(this.editingRect,'left') }">
-                                                    左对齐于此
+                                                <el-button @click="this.delete" style="width: 100%" type="danger">删除
                                                 </el-button>
-                                                <el-button style="width: 100%"
-                                                           @click="_ => { this.alignToThis(this.editingRect,'bottom') }">
-                                                    下对齐于此
-                                                </el-button>
-                                                <el-button style="width: 100%"
-                                                           @click="_ => { this.alignToThis(this.editingRect,'right') }">
-                                                    右对齐于此
+                                                <el-button v-for="item in contextMenus" style="width: 100%"
+                                                           :key="item"
+                                                           v-show="item.condition(this)"
+                                                           @click="item.handler">
+                                                    {{ item.label }}
                                                 </el-button>
                                             </el-button-group>
                                         </el-popover>
@@ -122,7 +126,7 @@
                                                                :on-select="()=>this.editRect(config)"
                                                                :on-move="(move) => rectChanged(config,move)"
                                                                :on-resize-start="onResizeStart"
-                                                               :on-context-menu="_ => { this.rightDown = true;this.editingRect = config; }"
+                                                               :on-context-menu="_ => {this.onContextMenu(config)}"
                                                                :on-resizing="onResizing"
                                                                :on-resize-end="onResizeEnd"/>
                                                 <DraggableTable v-if="config.type === 'table'"
@@ -130,7 +134,7 @@
                                                                 :rect="config.region"
                                                                 :on-select="()=>this.editRect(config)"
                                                                 :on-move="(move) => rectChanged(config,move)"
-                                                                :on-context-menu="_ => { this.rightDown = true;this.editingRect = config; }"
+                                                                :on-context-menu="_ => {this.onContextMenu(config)}"
                                                                 :on-resize-start="onResizeStart"
                                                                 :on-resizing="onResizing"
                                                                 :on-resize-end="onResizeEnd"/>
@@ -265,6 +269,69 @@
                                        :placeholder="modePlaceholder"
                                        :table="editingRect"></TableModeView>
                     </el-dialog>
+                    <el-dialog v-if="showClean" style="border-radius: 20px;width:300px"
+                               v-model="showClean" align-center
+                               title="按页清空">
+                        <el-form v-model="multiSelectForm" label-width="120px" style="margin: 0 auto">
+                            <el-form-item label="起始页码">
+                                <el-input-number :min="1" :max="multiSelectForm.endPage"
+                                                 v-model="multiSelectForm.startPage"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="结束页码">
+                                <el-input-number :min="multiSelectForm.startPage" :max="pages.length"
+                                                 v-model="multiSelectForm.endPage"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="启用奇偶页">
+                                <el-switch size="large" active-text="是" inactive-text="否" inline-prompt
+                                           v-model="multiSelectForm.useOption"></el-switch>
+                            </el-form-item>
+                            <el-form-item label="奇偶页" v-show="multiSelectForm.useOption">
+                                <el-switch size="large" inline-prompt
+                                           active-text="奇" active-value="single"
+                                           inactive-text="偶" inactive-value="double"
+                                           style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                                           :disabled="!multiSelectForm.useOption"
+                                           v-model="multiSelectForm.singleOrDouble"></el-switch>
+                            </el-form-item>
+                            <el-popconfirm style="width: 200px"
+                                           confirm-button-text="确认"
+                                           confirm-button-type="danger"
+                                           cancel-button-text="取消"
+                                           @confirm="confirmClean"
+                                           title="此操作不可撤销">
+                                <template #reference>
+                                    <el-button type="danger">清空</el-button>
+                                </template>
+                            </el-popconfirm>
+                        </el-form>
+                    </el-dialog>
+                    <el-dialog v-if="showPaste" style="border-radius: 20px;width:300px"
+                               v-model="showPaste" align-center
+                               title="按页粘贴">
+                        <el-form v-model="multiSelectForm" label-width="120px" style="margin: 0 auto">
+                            <el-form-item label="起始页码">
+                                <el-input-number :min="1" :max="multiSelectForm.endPage"
+                                                 v-model="multiSelectForm.startPage"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="结束页码">
+                                <el-input-number :min="multiSelectForm.startPage" :max="pages.length"
+                                                 v-model="multiSelectForm.endPage"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="启用奇偶页">
+                                <el-switch size="large" active-text="是" inactive-text="否" inline-prompt
+                                           v-model="multiSelectForm.useOption"></el-switch>
+                            </el-form-item>
+                            <el-form-item label="奇偶页" v-show="multiSelectForm.useOption">
+                                <el-switch size="large" inline-prompt
+                                           active-text="奇" active-value="single"
+                                           inactive-text="偶" inactive-value="double"
+                                           style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                                           :disabled="!multiSelectForm.useOption"
+                                           v-model="multiSelectForm.singleOrDouble"></el-switch>
+                            </el-form-item>
+                            <el-button type="primary" @click="confirmPaste">粘贴</el-button>
+                        </el-form>
+                    </el-dialog>
                     <el-dialog v-if="showStats" v-model="showStats"
                                style="max-height: 80%;border-radius: 20px;width: 70%">
                         <el-table max-height="500" border stripe :data="stats" row-key="id">
@@ -279,6 +346,7 @@
                             <el-table-column prop="mode" label="类型" width="80"></el-table-column>
                         </el-table>
                     </el-dialog>
+                
                 </el-container>
             </el-container>
         </el-container>
@@ -328,7 +396,7 @@ export default {
         console.log(r.data.data);
         window.data = r.data.data;
         let config = [];
-        r.data.data.forEach(c=>{
+        r.data.data.forEach(c => {
             config.push(TemplateGroup.from(c))
         });
         console.log(config)
@@ -369,104 +437,49 @@ export default {
             showMode: false,
             showInfo: false,
             showViewer: false,
-            showClean : false,
+            showClean: false,
+            showPaste: false,
             drawer: true,
             actives: ['1', '2', '3'],
-            menus: [
-                new TemplateGroup('单据类', "Ticket", 'primary',
-                    [
-                        new TemplateItem('精准控件', 'precise', '#5dc9f180',
-                            Config.UnitConfig, [
-                                {name: '数值', value: 'number'},
-                                {name: '布尔', value: 'bool'},
-                                {name: '字母', value: 'char'}
-                            ]),
-                        new TemplateItem('常规控件', 'normal', '#5dc9f180',
-                            Config.UnitConfig, [
-                                {name: '字符', value: 'string'},
-                                {name: '绘图', value: 'draw'},
-                                {name: '身份证', value: 'id'}
-                            ]),
-                        new TemplateItem('表格控件', 'table', '#5dc9f180',
-                            Config.TableConfig, [
-                                {name: '数值', value: 'number'},
-                                {name: '布尔', value: 'bool'},
-                                {name: '字母', value: 'char'}
-                            ]),
-                        new TemplateItem('图形控件', 'graphics', '#5dc9f180',
-                            Config.UnitConfig),
-                    ]),
-                new TemplateGroup('书写类', 'EditPen', 'warning',
-                    [
-                        new TemplateItem('颜色控件', 'color', '#e7b82b80',
-                            Config.UnitConfig, [
-                                {name: '黑', value: 'black'},
-                                {name: '红', value: 'red'},
-                                {name: '蓝', value: 'blue'}
-                            ]),
-                        new TemplateItem('粗细控件', 'thickness', '#e7b82b80',
-                            Config.UnitConfig, [
-                                {name: '极细', value: '1'},
-                                {name: '细', value: '2'},
-                                {name: '中等', value: '3'},
-                                {name: '粗', value: '4'},
-                                {name: '极粗', value: '5'}
-                            ]),
-                        new TemplateItem('擦除控件', 'erase', '#e7b82b80',
-                            Config.UnitConfig),
-                    ]),
-                new TemplateGroup('操作类', 'Operation', 'success',
-                    [
-                        TemplateItem.from({
-                            label: '管理控件',
-                            type: 'manage',
-                            color: '#95ef4180',
-                            relate: Config.UnitConfig,
-                            options: [
-                                {name: '收藏', value: 'star'},
-                                {name: '分享', value: 'share'},
-                                {name: '标签', value: 'tip'},
-                            ]
-                        }),
-                        TemplateItem.from({
-                            label: '换页控件',
-                            type: 'page',
-                            color: '#95ef4180',
-                            relate: Config.UnitConfig,
-                            options: [
-                                {name: '上一页', value: 'prev'},
-                                {name: '下一页', value: 'next'},
-                                {name: '新建页', value: 'new'},
-                            ]
-                        }),
-                        TemplateItem.from({
-                            label: '模式控件',
-                            type: 'mode',
-                            color: '#95ef4180',
-                            relate: Config.UnitConfig,
-                            options: [
-                                {name: '板书', value: 'board'},
-                                {name: '屏写', value: 'screen'},
-                                {name: 'PPT', value: 'ppt'},
-                                {name: '鼠标', value: 'mouse'},
-                                {name: '常规', value: 'normal'},
-                            ]
-                        }),
-                        new TemplateItem('定制控件', 'custom', '#95ef4180',
-                            Config.UnitConfig),
-                        new TemplateItem('录制控件', 'record', '#95ef4180',
-                            Config.UnitConfig),
-                    ]),
-                new TemplateGroup('资源类', 'Box', 'danger',
-                    [
-                        new TemplateItem('视频控件', 'video', '#ea977980',
-                            Config.UnitConfig),
-                        new TemplateItem('音频控件', 'audio', '#ea977980',
-                            Config.UnitConfig),
-                        new TemplateItem('路径控件', 'route', '#ea977980',
-                            Config.UnitConfig),
-                    ]),
+            contextMenus: [
+                {
+                    label: '上对齐于此', condition: (data) => data.selectRects.length > 1,
+                    handler: _ => {
+                        this.alignToThis(this.editingRect, 'top')
+                    }
+                },
+                {
+                    label: '左对齐于此', condition: (data) => data.selectRects.length > 1,
+                    handler: _ => {
+                        this.alignToThis(this.editingRect, 'left')
+                    }
+                },
+                {
+                    label: '下对齐于此', condition: (data) => data.selectRects.length > 1,
+                    handler: _ => {
+                        this.alignToThis(this.editingRect, 'bottom')
+                    }
+                },
+                {
+                    label: '右对齐于此', condition: (data) => data.selectRects.length > 1,
+                    handler: _ => {
+                        this.alignToThis(this.editingRect, 'right')
+                    }
+                },
+                {
+                    label: '水平对齐于此', condition: (data) => data.selectRects.length > 1,
+                    handler: _ => {
+                        this.alignToThis(this.editingRect, 'horizontal')
+                    }
+                },
+                {
+                    label: '垂直对齐于此', condition: (data) => data.selectRects.length > 1,
+                    handler: _ => {
+                        this.alignToThis(this.editingRect, 'vertical')
+                    }
+                }
             ],
+            menus: [],
             pages: [
                 new Page(
                     {
@@ -506,6 +519,12 @@ export default {
             copiedRects: null,
             lastClickPos: null,
             rightDown: false,
+            multiSelectForm: {
+                startPage: 1,
+                endPage: 1,
+                useOption: false,
+                singleOrDouble: 'single',
+            },
             get stats() {
                 const ret = [];
                 const page = this.pages.indexOf(this.currentPage) + 1;
@@ -674,12 +693,7 @@ export default {
             }
             if (this.scaling) {
                 if (event.key === 'c') {
-                    this.copiedRects = this.selectRects.copy;
-                    if (this.copiedRects.length > 0) {
-                        this.$message.success(`成功复制${this.copiedRects.length}个目标`);
-                    } else {
-                        this.$message.warning(`未选择复制目标`);
-                    }
+                    this.triggerCopy();
                 }
                 if (event.key === 'v') {
                     this.paste();
@@ -700,9 +714,25 @@ export default {
                 : this.scales.current === this.scales.range[1]
                     ? this.scales.range[1] : this.scales.current + 25
         },
+        onContextMenu(config) {
+            this.rightDown = true;
+            this.editingRect = config;
+            if (this.selectRects.length === 0) {
+                this.selectRects = [config];
+            }
+        },
         onScaleChange(n, o) {
             console.log(n, o)
         },
+        triggerCopy() {
+            this.copiedRects = this.selectRects.copy;
+            if (this.copiedRects.length > 0) {
+                this.$message.success(`成功复制${this.copiedRects.length}个目标`);
+            } else {
+                this.$message.warning(`未选择复制目标`);
+            }
+        },
+        
         paste() {
             if (!(this.copiedRects != null && this.copiedRects.length > 0)) {
                 this.$message.warning(`没有复制的对象`);
@@ -724,6 +754,7 @@ export default {
          */
         alignToThis(to, direction) {
             if (this.selectRects.length < 1) return;
+            
             /**
              * @param {Rect} rect
              */
@@ -731,26 +762,44 @@ export default {
             };
             switch (direction) {
                 case 'top':
+                    let y = to.region.rectangle.y;
                     move = (rect) => {
-                        rect.y = to.region.rectangle.y;
+                        rect.y = y;
                     };
                     break;
                 case 'left':
+                    let x = to.region.rectangle.x;
                     move = (rect) => {
-                        rect.x = to.region.rectangle.x;
+                        rect.x = x;
                     };
                     break;
                 case 'right':
+                    let right = to.region.rectangle.Right;
                     move = (rect) => {
-                        let x = to.region.rectangle.Right - rect.Width;
+                        let x = right - rect.Width;
                         rect.moveTo(new Point(x, rect.y))
                     };
                     break;
                 case 'bottom':
+                    let bottom = to.region.rectangle.Bottom;
                     move = (rect) => {
-                        let y = to.region.rectangle.Bottom - rect.Height;
+                        let y = bottom - rect.Height;
                         rect.moveTo(new Point(rect.x, y))
                     };
+                    break;
+                case 'horizontal':
+                    let yCenter = to.region.rectangle.Center.Y;
+                    move = (rect) => {
+                        let y = yCenter - rect.Height / 2;
+                        rect.moveTo(new Point(rect.x, y));
+                    }
+                    break;
+                case 'vertical':
+                    let xCenter = to.region.rectangle.Center.X;
+                    move = (rect) => {
+                        let x = xCenter - rect.Width / 2;
+                        rect.moveTo(new Point(x, rect.y));
+                    }
                     break;
             }
             this.selectRects.forEach(x => {
@@ -759,8 +808,69 @@ export default {
             })
             to.region.rectangle;
         },
-        cleanPages(){
-        
+        cleanPages() {
+            this.multiSelectForm = {
+                startPage: 1,
+                endPage: this.pages.length,
+                useOption: false,
+                singleOrDouble: 'single',
+            };
+            this.showClean = true;
+        },
+        getSelectCondition() {
+            let condition = (num) => false;
+            if (!this.multiSelectForm.useOption) {
+                condition = (num) => true;
+            } else {
+                switch (this.multiSelectForm.singleOrDouble) {
+                    case "single":
+                        condition = (num) => num % 2 === 1;
+                        break;
+                    case 'double':
+                        condition = (num) => num % 2 === 0;
+                        break;
+                }
+            }
+            return condition;
+        },
+        confirmClean() {
+            let count = 0;
+            console.log(this.multiSelectForm);
+            let condition = this.getSelectCondition();
+            
+            for (let i = this.multiSelectForm.startPage; i <= this.multiSelectForm.endPage; i++) {
+                if (!condition(i)) continue;
+                count += this.pages[i - 1].configs.length;
+                this.pages[i - 1].configs.clear();
+            }
+            this.showClean = false;
+            this.$message.success(`成功删除了 ${count} 个控件`);
+        },
+        pastePages() {
+            this.multiSelectForm = {
+                startPage: 1,
+                endPage: this.pages.length,
+                useOption: false,
+                singleOrDouble: 'single',
+            };
+            this.showPaste = true;
+        },
+        confirmPaste() {
+            let count = 0;
+            console.log(this.multiSelectForm);
+            let condition = this.getSelectCondition();
+            
+            for (let i = this.multiSelectForm.startPage; i <= this.multiSelectForm.endPage; i++) {
+                if (!condition(i)) continue;
+                count += this.selectRects.length;
+                this.selectRects.forEach(x => {
+                    let tar = x.clone;
+                    this.pages[i - 1].configs.push(tar);
+                })
+            }
+            this.selectRects = [];
+            this.showPaste = false;
+            this.$message.success(`成功粘贴了 ${count} 个控件`);
         }
     }
 }
