@@ -5,9 +5,11 @@
                 <el-row style="margin-top: 20px">
                     <el-col :span="8"></el-col>
                     <el-col :span="8" style="text-align: center">
+                        <el-button :disabled="viewport == null" @click="_ => this.fill('horizontal')">水平铺满
+                        </el-button>
                         <el-input-number v-model="this.scales.current"
-                                         :min="scales.range[0]" :max="scales.range[1]" :step="scales.step"
-                                         @change="onScaleChange"/>
+                                         :min="scales.range[0]" :max="scales.range[1]" :step="scales.step"/>
+                        <el-button :disabled="viewport == null" @click="_ => this.fill('vertical')">垂直铺满</el-button>
                     </el-col>
                     <el-col :span="8" style="text-align: end">
                         <el-button-group>
@@ -82,11 +84,11 @@
                 <el-container>
                     <el-container>
                         <el-main style="box-shadow: inset 0 0 16px black;">
-                            <el-scrollbar v-if="currentPage != null" style="background-color: #c2c2c2">
+                            <el-scrollbar ref="scroller" id="viewport" v-if="currentPage != null"
+                                          style="background-color: #c2c2c2">
                                 <TwoPartView :top="-mousePos.Y" :left="-mousePos.X" :show="showViewer"
-                                             
                                              width="200" height="200">
-                                    <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
+                                    <div :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
                                          style="position: relative">
                                         <div v-show="wrapRegion != null" style="
                                         position: absolute;top:0;left: 0;width:100%;height:100%;
@@ -150,9 +152,11 @@
                                         </div>
                                         <div id="Background" class="fill" style="top:0; position: absolute;"
                                              :onmousedown="mouseDown">
-                                            <div class="fill" style="user-select: none;pointer-events: none">
-                                                <img class="fill" style="user-select: none;pointer-events: none"
-                                                     src="../assets/background.png" alt=""/>
+                                            <div class="fill"
+                                                 style="user-select: none;pointer-events: none">
+                                                <img class="fill" v-if="this.currentPage!= null"
+                                                     style="user-select: none;pointer-events: none"
+                                                     :src="this.currentPage.url" alt=""/>
                                             </div>
                                         </div>
                                     </div>
@@ -259,12 +263,12 @@
                     <el-dialog v-if="showInfo"
                                v-model="showInfo" align-center style="border-radius: 20px"
                                title="内部单元格">
-                        <TableDetailView :scale="this.revertScale" :table="editingRect"></TableDetailView>
+                        <TableDetailView :scaled="this.revertScale" :table="editingRect"></TableDetailView>
                     </el-dialog>
                     <el-dialog v-if="showMode" style="border-radius: 20px"
                                v-model="showMode" align-center
                                title="识别模式">
-                        <TableModeView :scale="this.revertScale"
+                        <TableModeView :scaled="this.revertScale"
                                        :options="editingRect.template.options"
                                        :placeholder="modePlaceholder"
                                        :table="editingRect"></TableModeView>
@@ -346,7 +350,6 @@
                             <el-table-column prop="mode" label="类型" width="80"></el-table-column>
                         </el-table>
                     </el-dialog>
-                
                 </el-container>
             </el-container>
         </el-container>
@@ -399,6 +402,20 @@ export default {
         r.data.data.forEach(c => {
             config.push(TemplateGroup.from(c))
         });
+        let ps = await Request.get(`${Url.authservice.admin.queryFormInfo}?formId=6dcf42ed1f0440a9a43ed1061a1019bf`);
+        let formInfo = ps.data.data;
+        console.log(formInfo);
+        this.viewerSize = new Size(formInfo.pageWidth, formInfo.pageHeight);
+        let stable = new Size(formInfo.pageWidth, formInfo.pageHeight);
+        this.pages = [];
+        for (let i = 0; i < formInfo.pageCount; i++) {
+            this.pages.push(new Page({
+                configs: [],
+                url: `${formInfo.formUrl}/${i + 1}.png`,
+                size: stable
+            }));
+        }
+        
         console.log(config)
         this.menus = config;
         window.onwheel = this.mouseWheel;
@@ -480,17 +497,7 @@ export default {
                 }
             ],
             menus: [],
-            pages: [
-                new Page(
-                    {
-                        configs: []
-                    }),
-                new Page(
-                    {
-                        configs: []
-                    }
-                )
-            ],
+            pages: [],
             /**
              * @type {Page}
              */
@@ -507,7 +514,7 @@ export default {
             mousePos: new Point(0, 0),
             viewerSize: new Size(900, 700),
             scales: {
-                range: [50, 200],
+                range: [50, 600],
                 step: 25,
                 current: 100,
             },
@@ -525,6 +532,7 @@ export default {
                 useOption: false,
                 singleOrDouble: 'single',
             },
+            viewport: null,
             get stats() {
                 const ret = [];
                 const page = this.pages.indexOf(this.currentPage) + 1;
@@ -580,7 +588,32 @@ export default {
             }
         };
     },
+    mounted() {
+        let vue = this;
+        let interval;
+        interval = setInterval(() => {
+            if (!vue.$refs.scroller) return;
+            clearInterval(interval);
+            this.viewport = document.getElementById('viewport');
+            this.fill('horizontal');
+        }, 100);
+    },
     methods: {
+        fill(direction) {
+            let rect = this.viewport.getBoundingClientRect();
+            switch (direction) {
+                case 'horizontal':
+                    this.scales.current = (this.scales.current * rect.width / this.viewerSize.Width)
+                        .toFixed()
+                        .toInt();
+                    break;
+                case 'vertical':
+                    this.scales.current = (this.scales.current * rect.height / this.viewerSize.Height)
+                        .toFixed()
+                        .toInt();
+                    break;
+            }
+        },
         log(...args) {
             console.log(...args);
         },
@@ -732,7 +765,6 @@ export default {
                 this.$message.warning(`未选择复制目标`);
             }
         },
-        
         paste() {
             if (!(this.copiedRects != null && this.copiedRects.length > 0)) {
                 this.$message.warning(`没有复制的对象`);
@@ -740,7 +772,6 @@ export default {
             }
             this.copiedRects.forEach(x => {
                 let tar = x.clone;
-                tar.scale(1 / this.revertScale);
                 this.configs.push(tar);
                 if (this.lastClickPos != null) {
                     x.region.rectangle.moveTo(this.lastClickPos);
