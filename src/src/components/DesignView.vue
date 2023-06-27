@@ -3,8 +3,12 @@
         <el-container style="height: 98%">
             <el-header>
                 <el-row style="margin-top: 10px">
-                    <el-col :span="8" >
-                        <el-button style="margin-bottom: 4px" type="success" @click="postResult" size="large">提交</el-button>
+                    <el-col :span="8">
+                        <el-button-group>
+                            <el-button type="success" @click="postResult" size="large">提交
+                            </el-button>
+                            <el-button size="large" plain type="warning">暂存</el-button>
+                        </el-button-group>
                     </el-col>
                     <el-col :span="8" style="text-align: center">
                         <el-button :disabled="viewport == null" @click="_ => this.fill('horizontal')">水平铺满
@@ -40,7 +44,8 @@
             <el-container style="height: 80%">
                 <el-aside width="auto">
                     <el-scrollbar>
-                        <el-menu style="--active-color:#3390ef;" :collapse="!expand" :default-openeds="['0','1','2','3']">
+                        <el-menu style="--active-color:#3390ef;" :collapse="!expand"
+                                 :default-openeds="['0','1','2','3']">
                             <el-menu-item @click="()=> expand = !expand">
                                 <el-icon>
                                     <Expand v-if="expand"/>
@@ -453,7 +458,7 @@ export default {
     data() {
         window.Rect = Rect;
         return {
-            relationId : null,
+            relationId: null,
             /**
              * @type {Rect}
              */
@@ -531,7 +536,7 @@ export default {
                 return this.scales.current;
             },
             revertScale: 1,
-            scaling: false,
+            ctrl: false,
             copiedRects: null,
             lastClickPos: null,
             rightDown: false,
@@ -559,19 +564,19 @@ export default {
          * @param {Page} page
          * @returns {*[]}
          */
-        getStats(page){
+        getStats(page) {
             const ret = [];
             const pageNum = this.pages.indexOf(page) + 1;
             page.configs.forEach(x => {
                 let one = {
                     id: ret.length + 1,
-                    page : pageNum,
+                    page: pageNum,
                     num: x.id,
                     x: (x.region.rectangle.x * this.revertScale).toFixed().toInt(),
                     y: (x.region.rectangle.y * this.revertScale).toFixed().toInt(),
                     width: (x.region.rectangle.width * this.revertScale).toFixed().toInt(),
                     height: (x.region.rectangle.height * this.revertScale).toFixed().toInt(),
-                    template: { name : x.template.label , value : x.template.type },
+                    template: {name: x.template.label, value: x.template.type},
                     name: x.name,
                 };
                 if (x instanceof UnitConfig) {
@@ -591,11 +596,11 @@ export default {
                                 break;
                         }
                         one.children.add({
-                            page : pageNum,
+                            page: pageNum,
                             id: one.id * 10 + i,
                             num: one.num + '-' + i,
                             name: `${one.name ?? '表格'} 的 ${c.row + 1}行 ${c.col + 1}列`,
-                            template: { name : '子单元格' , value : 'subCell' },
+                            template: {name: '子单元格', value: 'subCell'},
                             x: (c.rectangle.x * this.revertScale).toFixed().toInt(),
                             y: (c.rectangle.y * this.revertScale).toFixed().toInt(),
                             width: (c.rectangle.width * this.revertScale).toFixed().toInt(),
@@ -604,7 +609,6 @@ export default {
                         })
                         i++;
                     })
-                    
                 }
                 ret.add(one);
             });
@@ -657,6 +661,16 @@ export default {
             })
         },
         editRect(rect) {
+            if (this.ctrl) {
+                if (this.selectRects.contains(rect)) {
+                    this.selectRects.remove(rect)
+                } else {
+                    this.selectRects.push(rect)
+                }
+                return;
+            }
+            
+            
             if (this.editingRect !== rect) {
                 this.editingRect = rect;
             }
@@ -729,13 +743,13 @@ export default {
         },
         keyDown(event) {
             if (event.key === 'Control') {
-                this.scaling = true;
+                this.ctrl = true;
             }
             console.log(event.key)
             if (event.key === 'Delete') {
                 this.delete();
             }
-            if (this.scaling) {
+            if (this.ctrl) {
                 if (event.key === 'c') {
                     this.triggerCopy();
                 }
@@ -747,11 +761,11 @@ export default {
         },
         keyUp(event) {
             if (event.key === 'Control') {
-                this.scaling = false;
+                this.ctrl = false;
             }
         },
         mouseWheel(event) {
-            if (!this.scaling) return;
+            if (!this.ctrl) return;
             this.scales.current = event.deltaY > 0
                 ? this.scales.current === this.scales.range[0]
                     ? this.scales.range[0] : this.scales.current - 25
@@ -845,7 +859,6 @@ export default {
                 if (x === to) return;
                 move(x.region.rectangle);
             })
-            to.region.rectangle;
         },
         cleanPages() {
             this.multiSelectForm = {
@@ -911,29 +924,41 @@ export default {
             this.showPaste = false;
             this.$message.success(`成功粘贴了 ${count} 个控件`);
         },
-        postResult(){
+        async postResult() {
             let page = 1;
             const ret = [];
-            this.pages.forEach(p=>{
+            this.pages.forEach(p => {
                 let tmp = this.getStats(p);
                 let configs = [];
-                tmp.forEach(c=>{
-                    if(c.children){
-                        c.children.forEach(cc =>{
+                tmp.forEach(c => {
+                    if (c.children) {
+                        c.children.forEach(cc => {
                             configs.push(cc);
                         })
-                    }else{
+                    } else {
                         configs.push(c)
                     }
                 });
                 ret.push({
-                    relationId : this.relationId,
+                    relationId: this.relationId,
                     page,
                     configs
                 })
-                page ++;
+                page++;
             })
             console.log(ret);
+            try {
+                let r = await Request.post(Url.authservice.admin.design.saveConfig, {
+                    "configList": ret
+                });
+                console.log(r)
+                if (r.data.code !== 1) {
+                    throw `请求异常 [ ${r.data.msg} ]`;
+                }
+                this.$message.success('提交成功');
+            } catch (e) {
+                this.$message.warning(e)
+            }
             return ret;
         }
     }
