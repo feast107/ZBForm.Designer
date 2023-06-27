@@ -2,7 +2,7 @@ const concat = (a, b) => `${a}/${b}`
 
 export class Url {
     static get Domain() {
-        return "http://47.93.86.37:8383";
+        return "";
     }
 
     static get authservice() {
@@ -17,12 +17,22 @@ export class Url {
                     route,
                     url: concat(url, route),
                     get queryItem() {
-                        let url = this.url
-                        return concat(url, 'queryItem');
+                        return concat(this.url, 'queryItem');
                     },
                     get queryFormInfo() {
-                        let url = this.url;
-                        return concat(url, 'queryFormInfo');
+                        return concat(this.url, 'queryFormInfo');
+                    },
+                    get design() {
+                        let url = concat(this.url, 'design');
+                        return {
+                            url,
+                            get saveConfig() {
+                                return concat(this.url, 'saveConfig');
+                            },
+                            get saveInfo() {
+                                return concat(this.url, 'saveInfo');
+                            }
+                        };
                     }
                 };
             }
