@@ -1,7 +1,7 @@
 // noinspection JSVoidFunctionReturnValueUsed
 
 export default (function () {
-    let copy ;
+    let copy;
     copy = (from, to) => {
         let c = copy;
         Object.keys(from).forEach(k => {
@@ -80,14 +80,24 @@ export default (function () {
             };
         }
     };
-
-    window.Demo = class{
-        get value(){
+    String.prototype.deserialize = function(type = null){
+        let ret = JSON.parse(this);
+        if (type) {
+            if (typeof type == 'function') {
+                ret.__proto__ = type.prototype;
+            } else {
+                ret.__proto__ = type;
+            }
+        }
+        return ret;
+    }
+    window.Demo = class {
+        get value() {
             console.log("this is getter");
             return new Demo();
         }
 
-        set value(value){
+        set value(value) {
             console.log("this is setter");
         }
     }
