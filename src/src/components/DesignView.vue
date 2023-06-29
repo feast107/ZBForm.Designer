@@ -7,17 +7,24 @@
                         <el-button-group>
                             <el-button type="success" @click="postResult" size="large">提交
                             </el-button>
-                            <el-button size="large" plain type="warning">暂存</el-button>
+                            <el-button size="large" @click="save" plain type="warning">暂存</el-button>
                         </el-button-group>
                     </el-col>
                     <el-col :span="8" style="text-align: center">
-                        <el-button :disabled="viewport == null" @click="_ => this.fill('horizontal')">水平铺满
+                        <el-button :disabled="viewport == null" type="info" plain
+                                   @click="_ => this.fill('horizontal')">
+                            水平铺满
                         </el-button>
                         <el-input-number v-model="this.scales.current"
                                          :min="scales.range[0]" :max="scales.range[1]" :step="scales.step"/>
-                        <el-button :disabled="viewport == null" @click="_ => this.fill('vertical')">垂直铺满</el-button>
+                        <el-button :disabled="viewport == null" type="info" plain
+                                   @click="_ => this.fill('vertical')">
+                            垂直铺满
+                        </el-button>
                     </el-col>
                     <el-col :span="8" style="text-align: end">
+                        <el-switch active-text="显示详情" v-model="showDescription"
+                                   style="margin-right: 10px"></el-switch>
                         <el-button-group>
                             <el-button plain type="info" @click="showStats = true">
                                 设计数据
@@ -31,12 +38,6 @@
                                        @click="_ => { this.pastePages(); }">
                                 按页粘贴
                             </el-button>
-                            <el-button :disabled="
-                            this.selectRects == null
-                            || this.selectRects.length === 0" plain type="danger"
-                                       @click="_ => { this.delete(); }">
-                                删除所选
-                            </el-button>
                         </el-button-group>
                     </el-col>
                 </el-row>
@@ -45,14 +46,14 @@
                 <el-aside width="auto">
                     <el-scrollbar>
                         <el-menu style="--active-color:#3390ef;" :collapse="!expand"
-                                 :default-openeds="['0','1','2','3']">
+                                 :default-openeds="['0','1','2','3','4']">
                             <el-menu-item @click="()=> expand = !expand">
                                 <el-icon>
-                                    <Expand v-if="expand"/>
+                                    <Expand v-if="!expand"/>
                                     <Fold v-else/>
                                 </el-icon>
                                 <template #title>
-                                    <span v-if="expand">展开</span>
+                                    <span v-if="!expand">展开</span>
                                     <span v-else>收起</span>
                                 </template>
                             </el-menu-item>
@@ -68,18 +69,32 @@
                                         <span>{{ menu.label }}</span>
                                     </template>
                                     <el-menu-item v-for="item in menu.items" :key="item">
-                                        <el-row :gutter="4" style="width: 100%;margin-right: 10px;">
+                                        <el-popover v-if="item.isCustom" trigger="contextmenu" placement="right">
+                                            <template #reference>
+                                                <el-row @click="() =>{this.generateFromMenu(item)}"
+                                                        :gutter="4" style="width: 100%;margin-right: 10px;">
+                                                    <el-col :span="20">
+                                                        <span>{{ item.label }}</span>
+                                                    </el-col>
+                                                    <el-col :span="4">
+                                                        <el-button style="vertical-align: center;width: 100%;"
+                                                                   :type="menu.style" plain/>
+                                                    </el-col>
+                                                </el-row>
+                                            </template>
+                                            <el-button size="large"
+                                                       type="danger" @click="_ => this.deleteTemplate(item.itemId)"
+                                                       style="width: 100%;">删除
+                                            </el-button>
+                                        </el-popover>
+                                        <el-row v-else @click="() =>{this.generateFromMenu(item)}"
+                                                :gutter="4" style="width: 100%;margin-right: 10px;">
                                             <el-col :span="20">
                                                 <span>{{ item.label }}</span>
                                             </el-col>
                                             <el-col :span="4">
                                                 <el-button style="vertical-align: center;width: 100%;"
-                                                           :type="menu.style" plain
-                                                           @click="_ =>{
-                                                               let config = item.generate();
-                                                               config.scale(1/this.revertScale);
-                                                               currentPage?.configs?.push(config)
-                                                           }"/>
+                                                           :type="menu.style" plain/>
                                             </el-col>
                                         </el-row>
                                     </el-menu-item>
@@ -95,16 +110,16 @@
                                           style="background-color: #c2c2c2">
                                 <TwoPartView :top="-mousePos.Y" :left="-mousePos.X" :show="showViewer"
                                              width="200" height="200">
-                                    <div ref="view" :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
-                                         style="position: relative">
+                                    <div ref="view"
+                                         :style="`width:${viewerSize.Width}px;height:${viewerSize.Height}px`"
+                                         style="position: relative;border: 1px solid black">
                                         <div v-show="wrapRegion != null" style="
                                         position: absolute;top:0;left: 0;width:100%;height:100%;
-                                         z-index: 100" :onmousemove="mouseMove"></div>
-                                        <el-popover v-if="this.editingRect != null" trigger="contextmenu">
+                                         z-index: 2000" :onmousemove="mouseMove"></div>
+                                        <el-popover v-if="this.editingRect !== null" trigger="contextmenu">
                                             <template #reference>
                                                 <div style="position: absolute;
-                                                z-index: 200; background-color: transparent;
-                                                user-select: none"
+                                                z-index: 2000; background-color: transparent;"
                                                      @click="this.rightDown = false"
                                                      :style="`left:${this.editingRect.region.rectangle.x
                                                 }px;top:${this.editingRect.region.rectangle.y
@@ -113,23 +128,38 @@
                                                  pointer-events: ${ this.rightDown ? ''  : 'none' };`">
                                                 </div>
                                             </template>
-                                            <el-button-group>
-                                                <el-button @click="triggerCopy" style="width: 100%" type="primary">
-                                                    复制
-                                                </el-button>
-                                                <el-button @click="this.delete" style="width: 100%" type="danger">删除
-                                                </el-button>
-                                                <el-button v-for="item in contextMenus" style="width: 100%"
-                                                           :key="item"
-                                                           v-show="item.condition(this)"
-                                                           @click="item.handler">
-                                                    {{ item.label }}
-                                                </el-button>
+                                            <el-button-group style="width: 100%">
+                                                <el-popover placement="right"
+                                                            v-if="editingRect.template.type !== TableConfig.type &&
+                                                            this.editingRect.template.options">
+                                                    <template #reference>
+                                                        <el-button icon="Paperclip" style="width: 100%">类型</el-button>
+                                                    </template>
+                                                    <el-menu>
+                                                        <el-menu-item :index="`${index}`"
+                                                                      @click="_ => { editingRect.mode = item }"
+                                                                      style="height: min-content"
+                                                                      v-for="(item,index) in editingRect.template.options"
+                                                                      :key="index">{{ item.name }}
+                                                        </el-menu-item>
+                                                    </el-menu>
+                                                </el-popover>
+                                                
+                                                <div v-for="item in contextMenus" :key="item" style="width: 100%">
+                                                    <el-button style="width: 100%" :type="item.type ?? ''"
+                                                               v-show="item.condition(this)"
+                                                               @click="item.handler">
+                                                        <el-icon class="el-icon--left">
+                                                            <component :is="item.icon"></component>
+                                                        </el-icon>
+                                                        {{ item.label }}
+                                                    </el-button>
+                                                </div>
                                             </el-button-group>
                                         </el-popover>
                                         <div id="Container" class="fill" style="z-index: 50;top:0; left :0;">
                                             <div v-for="config in configs" :key="config">
-                                                <DraggableRect v-if="config.type !== 'table'"
+                                                <DraggableRect v-if="config.type !== TableConfig.type"
                                                                :style="`background-color: ${config.backgroundColor}`"
                                                                :rect="config.region"
                                                                :on-select="()=>this.editRect(config)"
@@ -137,8 +167,20 @@
                                                                :on-resize-start="onResizeStart"
                                                                :on-context-menu="_ => {this.onContextMenu(config)}"
                                                                :on-resizing="onResizing"
-                                                               :on-resize-end="onResizeEnd"/>
-                                                <DraggableTable v-if="config.type === 'table'"
+                                                               :on-resize-end="onResizeEnd">
+                                                    <div v-show="showDescription" :style="`width:${config.region.rectangle.width}px;height:${
+                                                        config.region.rectangle.height}px;`"
+                                                         class="descriptorDiv">
+                                                        <span style="left:0"
+                                                              class="descriptor"
+                                                              :style="`top:${config.region.rectangle.height}px`">
+                                                            {{ config.name }}</span>
+                                                        <span class="descriptor"
+                                                              style="top:-20px;right:0">
+                                                            {{ config.mode?.name ?? '' }}</span>
+                                                    </div>
+                                                </DraggableRect>
+                                                <DraggableTable v-if="config.type === TableConfig.type"
                                                                 :style="`background-color: ${config.backgroundColor}`"
                                                                 :rect="config.region"
                                                                 :on-select="()=>this.editRect(config)"
@@ -146,11 +188,22 @@
                                                                 :on-context-menu="_ => {this.onContextMenu(config)}"
                                                                 :on-resize-start="onResizeStart"
                                                                 :on-resizing="onResizing"
-                                                                :on-resize-end="onResizeEnd"/>
+                                                                :on-resize-end="onResizeEnd">
+                                                    <div v-if="showDescription" :style="`width:${config.region.rectangle.width}px;height:${
+                                                        config.region.rectangle.height}px;`"
+                                                         class="descriptorDiv">
+                                                        <span style="left:0"
+                                                              class="descriptor"
+                                                              :style="`top:${config.region.rectangle.height}px`">
+                                                            {{ config.name }}</span>
+                                                        <span class="descriptor"
+                                                              style="top:-20px;right:0">
+                                                            {{ config.mode?.name ?? '' }}</span>
+                                                    </div>
+                                                </DraggableTable>
                                             </div>
-                                            <div v-if="wrapRegion!=null"
-                                                 style="position: absolute;background-color: #00000020;z-index: 100;
-                                                 user-select: none;pointer-events: none"
+                                            <div v-if="wrapRegion!=null" class="unSelect"
+                                                 style="position: absolute;background-color: #00000020;z-index: 1000;"
                                                  :style="`top:${wrapRegion.Top
                                                  }px;left:${ wrapRegion.Left
                                                  }px;width:${wrapRegion.Width
@@ -159,10 +212,8 @@
                                         </div>
                                         <div id="Background" class="fill" style="top:0; position: absolute;"
                                              :onmousedown="mouseDown">
-                                            <div class="fill"
-                                                 style="user-select: none;pointer-events: none">
-                                                <img class="fill" v-if="this.currentPage!= null"
-                                                     style="user-select: none;pointer-events: none"
+                                            <div class="fill unSelect">
+                                                <img class="fill unSelect" v-if="this.currentPage!= null"
                                                      :src="this.currentPage.url" alt=""/>
                                             </div>
                                         </div>
@@ -178,185 +229,229 @@
                                            @current-change="val => this.currentPage = pages[val-1]"/>
                         </el-footer>
                     </el-container>
-                    <el-aside style="overflow: hidden;height:100%">
-                        <el-scrollbar style="height: 100%">
-                            <el-card class="box-card" style="height: 100%;" shadow="never">
-                                <div v-if="this.editingRect != null">
-                                    <el-collapse v-model="actives">
-                                        <el-collapse-item title="基本属性" name="1">
-                                            <el-form-item label="模板:">
-                                                {{ this.editingRect.template.label }}
-                                            </el-form-item>
-                                            <el-form-item label="编号:">
-                                                {{ this.editingRect.id }}
-                                            </el-form-item>
-                                            <el-form-item label="名称:">
-                                                <el-input v-model="this.editingRect.name"></el-input>
-                                            </el-form-item>
-                                            <el-form-item
-                                                v-if="editingRect.template.type !== 'table'
-                                            && editingRect.template.options != null" label="类型:">
-                                                <el-select v-model="this.editingRect.region.mode"
-                                                           :type="editingRect.template.style"
-                                                           :placeholder="modePlaceholder">
-                                                    <el-option v-for="item in editingRect.template.options"
-                                                               :type="editingRect.template.style"
-                                                               :key="item.value"
-                                                               :label="item.name"
-                                                               :value="item"
-                                                    />
-                                                </el-select>
-                                            </el-form-item>
-                                        </el-collapse-item>
-                                        <el-collapse-item title="控件位置" name="2">
-                                            <el-form-item label="左上">
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.LeftTop.X* this.revertScale"/>
-                                                ,
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.LeftTop.Y* this.revertScale"/>
-                                            </el-form-item>
-                                            <el-form-item label="右上">
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.RightTop.X* this.revertScale"/>
-                                                ,
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.RightTop.Y* this.revertScale"/>
-                                            </el-form-item>
-                                            <el-form-item label="左下">
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.LeftBottom.X* this.revertScale"/>
-                                                ,
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.LeftBottom.Y* this.revertScale"/>
-                                            </el-form-item>
-                                            <el-form-item label="右下:">
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.RightBottom.X* this.revertScale"/>
-                                                ,
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.RightBottom.Y* this.revertScale"/>
-                                            </el-form-item>
-                                        </el-collapse-item>
-                                        <el-collapse-item title="控件尺寸" name="3">
-                                            <el-form-item label="宽">
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.Width * this.revertScale"/>
-                                            </el-form-item>
-                                            <el-form-item label="高">
-                                                <el-statistic
-                                                    :value="this.editingRect.region.rectangle.Height* this.revertScale"/>
-                                            </el-form-item>
-                                        </el-collapse-item>
-                                        <el-collapse-item v-if="this.editingRect.type === 'table' " title="表格属性"
-                                                          name="4">
-                                            <el-form-item label="表格行列:">
-                                                <el-button style="margin-bottom: 10px" @click="() => showInfo = true">
-                                                    查看设置
-                                                </el-button>
-                                            </el-form-item>
-                                            <el-form-item label="识别类型:">
-                                                <el-button style="margin-bottom: 10px" @click="() => showMode = true">
-                                                    查看设置
-                                                </el-button>
-                                            </el-form-item>
-                                        </el-collapse-item>
-                                    </el-collapse>
-                                </div>
-                                <el-empty v-else description="未选中目标"></el-empty>
-                            </el-card>
-                        </el-scrollbar>
-                    </el-aside>
-                    <el-dialog v-if="showInfo"
-                               v-model="showInfo" align-center style="border-radius: 20px"
-                               title="内部单元格">
-                        <TableDetailView :scaled="this.revertScale" :table="editingRect"></TableDetailView>
-                    </el-dialog>
-                    <el-dialog v-if="showMode" style="border-radius: 20px"
-                               v-model="showMode" align-center
-                               title="识别模式">
-                        <TableModeView :scaled="this.revertScale"
-                                       :options="editingRect.template.options"
-                                       :placeholder="modePlaceholder"
-                                       :table="editingRect"></TableModeView>
-                    </el-dialog>
-                    <el-dialog v-if="showClean" style="border-radius: 20px;width:300px"
-                               v-model="showClean" align-center
-                               title="按页清空">
-                        <el-form v-model="multiSelectForm" label-width="120px" style="margin: 0 auto">
-                            <el-form-item label="起始页码">
-                                <el-input-number :min="1" :max="multiSelectForm.endPage"
-                                                 v-model="multiSelectForm.startPage"></el-input-number>
-                            </el-form-item>
-                            <el-form-item label="结束页码">
-                                <el-input-number :min="multiSelectForm.startPage" :max="pages.length"
-                                                 v-model="multiSelectForm.endPage"></el-input-number>
-                            </el-form-item>
-                            <el-form-item label="启用奇偶页">
-                                <el-switch size="large" active-text="是" inactive-text="否" inline-prompt
-                                           v-model="multiSelectForm.useOption"></el-switch>
-                            </el-form-item>
-                            <el-form-item label="奇偶页" v-show="multiSelectForm.useOption">
-                                <el-switch size="large" inline-prompt
-                                           active-text="奇" active-value="single"
-                                           inactive-text="偶" inactive-value="double"
-                                           style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
-                                           :disabled="!multiSelectForm.useOption"
-                                           v-model="multiSelectForm.singleOrDouble"></el-switch>
-                            </el-form-item>
-                            <el-popconfirm style="width: 200px"
-                                           confirm-button-text="确认"
-                                           confirm-button-type="danger"
-                                           cancel-button-text="取消"
-                                           @confirm="confirmClean"
-                                           title="此操作不可撤销">
-                                <template #reference>
-                                    <el-button type="danger">清空</el-button>
+                    <el-aside style="overflow: hidden;height:100%;width: max-content;right: 0;float: right">
+                        <el-menu :collapse="rightSideCollapse">
+                            <el-menu-item @click="()=> rightSideCollapse = !rightSideCollapse">
+                                <el-icon>
+                                    <Expand v-if="!rightSideCollapse"/>
+                                    <Fold v-else/>
+                                </el-icon>
+                                <template #title>
+                                    <span v-if="rightSideCollapse">展开</span>
+                                    <span v-else>收起</span>
                                 </template>
-                            </el-popconfirm>
-                        </el-form>
-                    </el-dialog>
-                    <el-dialog v-if="showPaste" style="border-radius: 20px;width:300px"
-                               v-model="showPaste" align-center
-                               title="按页粘贴">
-                        <el-form v-model="multiSelectForm" label-width="120px" style="margin: 0 auto">
-                            <el-form-item label="起始页码">
-                                <el-input-number :min="1" :max="multiSelectForm.endPage"
-                                                 v-model="multiSelectForm.startPage"></el-input-number>
-                            </el-form-item>
-                            <el-form-item label="结束页码">
-                                <el-input-number :min="multiSelectForm.startPage" :max="pages.length"
-                                                 v-model="multiSelectForm.endPage"></el-input-number>
-                            </el-form-item>
-                            <el-form-item label="启用奇偶页">
-                                <el-switch size="large" active-text="是" inactive-text="否" inline-prompt
-                                           v-model="multiSelectForm.useOption"></el-switch>
-                            </el-form-item>
-                            <el-form-item label="奇偶页" v-show="multiSelectForm.useOption">
-                                <el-switch size="large" inline-prompt
-                                           active-text="奇" active-value="single"
-                                           inactive-text="偶" inactive-value="double"
-                                           style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
-                                           :disabled="!multiSelectForm.useOption"
-                                           v-model="multiSelectForm.singleOrDouble"></el-switch>
-                            </el-form-item>
-                            <el-button type="primary" @click="confirmPaste">粘贴</el-button>
-                        </el-form>
-                    </el-dialog>
-                    <el-dialog v-if="showStats" v-model="showStats"
-                               style="max-height: 80%;border-radius: 20px;width: 70%">
-                        <el-table max-height="500" border stripe :data="getStats(this.currentPage)" row-key="id">
-                            <el-table-column prop="page" label="页码"></el-table-column>
-                            <el-table-column prop="num" label="编号"></el-table-column>
-                            <el-table-column prop="name" label="名称"></el-table-column>
-                            <el-table-column prop="template.name" label="模板" width="100"></el-table-column>
-                            <el-table-column prop="x" label="X" width="60"></el-table-column>
-                            <el-table-column prop="y" label="Y" width="60"></el-table-column>
-                            <el-table-column prop="width" label="宽" width="60"></el-table-column>
-                            <el-table-column prop="height" label="高" width="60"></el-table-column>
-                            <el-table-column prop="mode.name" label="类型" width="80"></el-table-column>
-                        </el-table>
-                    </el-dialog>
+                            </el-menu-item>
+                        </el-menu>
+                        
+                        <div style="height: 90%" v-show="!rightSideCollapse">
+                            <el-scrollbar style="height:100%">
+                                <el-card class="box-card" style="height: 100%;" shadow="never">
+                                    <div v-if="this.editingRect != null" style="width:270px;">
+                                        <el-collapse v-model="actives">
+                                            <el-collapse-item title="基本属性" name="1">
+                                                <el-form-item label="模板:">
+                                                    {{ this.editingRect.template.label }}
+                                                </el-form-item>
+                                                <el-form-item label="编号:">
+                                                    {{ this.editingRect.id }}
+                                                </el-form-item>
+                                                <el-form-item label="名称:">
+                                                    <el-input v-model="this.editingRect.name"></el-input>
+                                                </el-form-item>
+                                                <el-form-item
+                                                    v-if="editingRect.template.type !== TableConfig.type
+                                            && editingRect.template.options != null" label="类型:">
+                                                    <el-select v-model="this.editingRect.mode"
+                                                               :type="editingRect.template.style"
+                                                               :placeholder="modePlaceholder">
+                                                        <el-option v-for="(item,index) in editingRect.template.options"
+                                                                   :type="editingRect.template.style"
+                                                                   :key="index"
+                                                                   :label="item.name"
+                                                                   :value="item"
+                                                        />
+                                                    </el-select>
+                                                </el-form-item>
+                                            </el-collapse-item>
+                                            <el-collapse-item title="控件位置" name="2">
+                                                <el-form-item label="左上">
+                                                    {{
+                                                        (this.editingRect.region.rectangle.LeftTop.X * this.revertScale).round()
+                                                    }}mm
+                                                    ，
+                                                    {{
+                                                        (this.editingRect.region.rectangle.LeftTop.Y * this.revertScale).round()
+                                                    }}mm
+                                                </el-form-item>
+                                                <el-form-item label="右上">
+                                                    {{
+                                                        (this.editingRect.region.rectangle.RightTop.X * this.revertScale).round()
+                                                    }}mm
+                                                    ，
+                                                    {{
+                                                        (this.editingRect.region.rectangle.RightTop.Y * this.revertScale).round()
+                                                    }}mm
+                                                </el-form-item>
+                                                <el-form-item label="左下">
+                                                    {{
+                                                        (this.editingRect.region.rectangle.LeftBottom.X * this.revertScale).round()
+                                                    }}mm
+                                                    ，
+                                                    {{
+                                                        (this.editingRect.region.rectangle.LeftBottom.Y * this.revertScale).round()
+                                                    }}mm
+                                                </el-form-item>
+                                                <el-form-item label="右下:">
+                                                    {{
+                                                        (this.editingRect.region.rectangle.RightBottom.X * this.revertScale).round()
+                                                    }}mm
+                                                    ，
+                                                    {{
+                                                        (this.editingRect.region.rectangle.RightBottom.Y * this.revertScale).round()
+                                                    }}mm
+                                                </el-form-item>
+                                            </el-collapse-item>
+                                            <el-collapse-item title="控件尺寸" name="3">
+                                                <el-form-item label="宽">
+                                                    {{
+                                                        (this.editingRect.region.rectangle.Width * this.revertScale).round()
+                                                    }}mm
+                                                </el-form-item>
+                                                <el-form-item label="高">
+                                                    {{
+                                                        (this.editingRect.region.rectangle.Height * this.revertScale).round()
+                                                    }}mm
+                                                </el-form-item>
+                                            </el-collapse-item>
+                                            <el-collapse-item title="表格属性" name="4"
+                                                              v-if="this.editingRect.type === TableConfig.type ">
+                                                <el-form-item label="表格行列:">
+                                                    <el-button style="margin-bottom: 10px"
+                                                               @click="() => showInfo = true">
+                                                        查看设置
+                                                    </el-button>
+                                                </el-form-item>
+                                                <el-form-item label="识别类型:">
+                                                    <el-button style="margin-bottom: 10px"
+                                                               @click="() => showMode = true">
+                                                        查看设置
+                                                    </el-button>
+                                                </el-form-item>
+                                            </el-collapse-item>
+                                            <el-collapse-item title="注释" name="5">
+                                                <el-input type="textarea" v-model="editingRect.comment"></el-input>
+                                            </el-collapse-item>
+                                        </el-collapse>
+                                    </div>
+                                    <el-empty style="width:270px;" v-else description="未选中目标"></el-empty>
+                                </el-card>
+                            </el-scrollbar>
+                        </div>
+                    
+                    </el-aside>
+                    <div>
+                        <el-dialog v-if="showInfo"
+                                   v-model="showInfo" align-center style="border-radius: 20px"
+                                   title="内部单元格">
+                            <TableDetailView :scaled="this.revertScale" :table="editingRect"></TableDetailView>
+                        </el-dialog>
+                        <el-dialog v-if="showMode" style="border-radius: 20px"
+                                   v-model="showMode" align-center
+                                   title="识别模式">
+                            <TableModeView :scaled="this.revertScale"
+                                           :options="editingRect.template.options"
+                                           :placeholder="modePlaceholder"
+                                           :table="editingRect"></TableModeView>
+                        </el-dialog>
+                        <el-dialog v-if="showClean" style="border-radius: 20px;width:300px"
+                                   v-model="showClean" align-center
+                                   title="按页清空">
+                            <el-form v-model="multiSelectForm" label-width="120px" style="margin: 0 auto">
+                                <el-form-item label="起始页码">
+                                    <el-input-number :min="1" :max="multiSelectForm.endPage"
+                                                     v-model="multiSelectForm.startPage"></el-input-number>
+                                </el-form-item>
+                                <el-form-item label="结束页码">
+                                    <el-input-number :min="multiSelectForm.startPage" :max="pages.length"
+                                                     v-model="multiSelectForm.endPage"></el-input-number>
+                                </el-form-item>
+                                <el-form-item label="启用奇偶页">
+                                    <el-switch size="large" active-text="是" inactive-text="否" inline-prompt
+                                               v-model="multiSelectForm.useOption"></el-switch>
+                                </el-form-item>
+                                <el-form-item label="奇偶页" v-show="multiSelectForm.useOption">
+                                    <el-switch size="large" inline-prompt
+                                               active-text="奇" active-value="single"
+                                               inactive-text="偶" inactive-value="double"
+                                               style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                                               :disabled="!multiSelectForm.useOption"
+                                               v-model="multiSelectForm.singleOrDouble"></el-switch>
+                                </el-form-item>
+                                <el-popconfirm style="width: 200px"
+                                               confirm-button-text="确认"
+                                               confirm-button-type="danger"
+                                               cancel-button-text="取消"
+                                               @confirm="confirmClean"
+                                               title="此操作不可撤销">
+                                    <template #reference>
+                                        <el-button type="danger">清空</el-button>
+                                    </template>
+                                </el-popconfirm>
+                            </el-form>
+                        </el-dialog>
+                        <el-dialog v-if="showPaste" style="border-radius: 20px;width:300px"
+                                   v-model="showPaste" align-center
+                                   title="按页粘贴">
+                            <el-form v-model="multiSelectForm" label-width="120px" style="margin: 0 auto">
+                                <el-form-item label="起始页码">
+                                    <el-input-number :min="1" :max="multiSelectForm.endPage"
+                                                     v-model="multiSelectForm.startPage"></el-input-number>
+                                </el-form-item>
+                                <el-form-item label="结束页码">
+                                    <el-input-number :min="multiSelectForm.startPage" :max="pages.length"
+                                                     v-model="multiSelectForm.endPage"></el-input-number>
+                                </el-form-item>
+                                <el-form-item label="启用奇偶页">
+                                    <el-switch size="large" active-text="是" inactive-text="否" inline-prompt
+                                               v-model="multiSelectForm.useOption"></el-switch>
+                                </el-form-item>
+                                <el-form-item label="奇偶页" v-show="multiSelectForm.useOption">
+                                    <el-switch size="large" inline-prompt
+                                               active-text="奇" active-value="single"
+                                               inactive-text="偶" inactive-value="double"
+                                               style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                                               :disabled="!multiSelectForm.useOption"
+                                               v-model="multiSelectForm.singleOrDouble"></el-switch>
+                                </el-form-item>
+                                <el-button type="primary" @click="confirmPaste">粘贴</el-button>
+                            </el-form>
+                        </el-dialog>
+                        <el-dialog v-if="showStats" v-model="showStats"
+                                   style="max-height: 80%;border-radius: 20px;width: 70%">
+                            <el-table max-height="500" border stripe :data="getStats(this.currentPage)" row-key="id">
+                                <el-table-column prop="page" label="页码"></el-table-column>
+                                <el-table-column prop="num" label="编号"></el-table-column>
+                                <el-table-column prop="name" label="名称"></el-table-column>
+                                <el-table-column prop="template.name" label="模板" width="100"></el-table-column>
+                                <el-table-column prop="x" label="X" width="60"></el-table-column>
+                                <el-table-column prop="y" label="Y" width="60"></el-table-column>
+                                <el-table-column prop="width" label="宽" width="60"></el-table-column>
+                                <el-table-column prop="height" label="高" width="60"></el-table-column>
+                                <el-table-column prop="mode.name" label="类型" width="80"></el-table-column>
+                            </el-table>
+                        </el-dialog>
+                        <el-dialog v-if="createTemplate.show" v-model="createTemplate.show"
+                                   style="border-radius: 20px" align-center width="300"
+                                   title="自定义控件组">
+                            <el-form>
+                                <el-form-item label="模板名称">
+                                    <el-input v-model="createTemplate.name"></el-input>
+                                </el-form-item>
+                                <el-button @click="makeTemplate" type="primary">确定</el-button>
+                            </el-form>
+                        </el-dialog>
+                    </div>
+                
                 </el-container>
             </el-container>
         </el-container>
@@ -373,8 +468,7 @@ import TableDetailView from "./controls/TableDetailView.vue";
 import {Point} from '@/utils/drawing/point';
 import {Size} from '@/utils/drawing/size';
 import {Rect} from '@/utils/drawing/rect'
-import {Table} from "@/models/table";
-import {Unit} from "@/models/unit";
+import {Unit, Table, Region} from "@/models/region";
 import {Config, UnitConfig, TableConfig} from "@/models/config";
 import {Page} from "@/models/page";
 import {TemplateGroup, TemplateItem} from "@/models/template";
@@ -401,21 +495,29 @@ export default {
         TableModeView
     },
     async created() {
-        let r = await Request.get(Url.authservice.admin.queryItem);
-        if (r.data.code !== 1) throw '网络不佳';
-        console.log(r.data.data);
-        window.data = r.data.data;
-        let config = [];
-        r.data.data.forEach(c => {
-            config.push(TemplateGroup.from(c))
-        });
-        let ps = await Request.get(`${Url.authservice.admin.queryFormInfo}?formId=6dcf42ed1f0440a9a43ed1061a1019bf`);
+        let url = new URL(window.location).searchParams;
+        let userId = url.get('userId');
+        let formId = url.get('formId');
+        if (userId) this.userId = userId;
+        if (formId) this.formId = formId;
+        console.log(`UserId : [ ${this.userId} ]`);
+        console.log(`FormId : [ ${this.formId} ]`);
+        await this.loadConfig();
+        let ps;
+        try {
+            ps = await Request.get(`${Url.authservice.admin.queryFormInfo}?formId=${this.formId}`);
+            if (ps.data.code !== 1) {
+                throw ps.data.msg;
+            }
+        } catch (e) {
+            this.$message.error(e);
+            return;
+        }
+        
         /**
          * @type {Form}
          */
         let formInfo = ps.data.data;
-        this.relationId = formInfo.formId;
-        console.log(formInfo);
         this.viewerSize = new Size(formInfo.pageWidth, formInfo.pageHeight);
         let stable = new Size(formInfo.pageWidth, formInfo.pageHeight);
         this.pages = [];
@@ -426,9 +528,19 @@ export default {
                 size: stable
             }));
         }
+        let rs;
+        try {
+            rs = await Request.get(`${Url.authservice.admin.design.queryInfo}?formId=${this.formId}`);
+            if (rs.data.code !== 1) {
+                throw rs.data.msg;
+            }
+        } catch (e) {
+            this.$message.error(e);
+        }
+        if (rs.data.data) {
+            this.loadFromJson(rs.data.data);
+        }
         
-        console.log(config)
-        this.menus = config;
         window.onwheel = this.mouseWheel;
         window.onkeydown = this.keyDown;
         window.onkeyup = this.keyUp;
@@ -443,14 +555,16 @@ export default {
         window.onkeyup = null;
     },
     watch: {
-        selectTab(n, o) {
-        
+        currentPage(n, o) {
+            this.selectRects.clear();
         },
         currentScale(n, o) {
             let scale = n / o;
             this.viewerSize.scale(scale);
             this.pages.forEach(p => {
-                p.configs.forEach(x => x.scale(scale));
+                p.configs.forEach(x => {
+                    x.scale(scale);
+                });
             });
             this.revertScale /= scale;
         }
@@ -458,53 +572,89 @@ export default {
     data() {
         window.Rect = Rect;
         return {
-            relationId: null,
+            userId: '64882984a232e987c68862dd',
+            rightSideCollapse: false,
+            formId: '6dcf42ed1f0440a9a43ed1061a1019bf',
             /**
              * @type {Rect}
              */
             wrapRegion: null,
             expand: true,
+            createTemplate: {
+                show: false,
+                name: '',
+            },
             showStats: false,
             showMode: false,
             showInfo: false,
             showViewer: false,
             showClean: false,
             showPaste: false,
+            showDescription: false,
             drawer: true,
-            actives: ['1', '2', '3'],
+            actives: ['1', '2', '3', '5'],
             contextMenus: [
                 {
-                    label: '上对齐于此', condition: (data) => data.selectRects.length > 1,
+                    label: '复制', condition: (_) => true,
+                    icon: 'CopyDocument',
+                    handler: this.triggerCopy
+                },
+                {
+                    label: '删除', condition: (_) => true,
+                    icon: 'Delete',
+                    handler: this.delete
+                },
+                {
+                    label: '制作模板', condition: (_) => true,
+                    icon: 'Printer',
+                    handler: () => this.createTemplate.show = true
+                },
+                {
+                    label: '置于顶层', condition: (data) => data.selectRects.length === 1,
+                    icon: 'Top',
+                    handler: _ => {
+                        this.putLayer('top')
+                    }
+                },
+                {
+                    label: '置于底层', condition: (data) => data.selectRects.length === 1,
+                    icon: 'Bottom',
+                    handler: _ => {
+                        this.putLayer('bottom')
+                    }
+                },
+                {
+                    label: '上对齐', condition: (data) => data.selectRects.length > 1, icon: 'ArrowUp',
                     handler: _ => {
                         this.alignToThis(this.editingRect, 'top')
                     }
                 },
                 {
-                    label: '左对齐于此', condition: (data) => data.selectRects.length > 1,
+                    label: '左对齐', condition: (data) => data.selectRects.length > 1, icon: 'ArrowLeft',
                     handler: _ => {
                         this.alignToThis(this.editingRect, 'left')
                     }
                 },
                 {
-                    label: '下对齐于此', condition: (data) => data.selectRects.length > 1,
+                    label: '下对齐', condition: (data) => data.selectRects.length > 1, icon: 'ArrowDown',
                     handler: _ => {
                         this.alignToThis(this.editingRect, 'bottom')
                     }
                 },
                 {
-                    label: '右对齐于此', condition: (data) => data.selectRects.length > 1,
+                    label: '右对齐', condition: (data) => data.selectRects.length > 1, icon: 'ArrowRight',
                     handler: _ => {
                         this.alignToThis(this.editingRect, 'right')
                     }
                 },
                 {
-                    label: '水平对齐于此', condition: (data) => data.selectRects.length > 1,
+                    label: '水平对齐', condition: (data) => data.selectRects.length > 1, icon: 'Switch',
                     handler: _ => {
                         this.alignToThis(this.editingRect, 'horizontal')
                     }
                 },
                 {
-                    label: '垂直对齐于此', condition: (data) => data.selectRects.length > 1,
+                    label: '垂直对齐', condition: (data) => data.selectRects.length > 1, icon: 'Sort',
                     handler: _ => {
                         this.alignToThis(this.editingRect, 'vertical')
                     }
@@ -577,10 +727,11 @@ export default {
                     width: (x.region.rectangle.width * this.revertScale).toFixed().toInt(),
                     height: (x.region.rectangle.height * this.revertScale).toFixed().toInt(),
                     template: {name: x.template.label, value: x.template.type},
+                    comment: x.comment,
                     name: x.name,
                 };
                 if (x instanceof UnitConfig) {
-                    one.mode = x.region.mode;
+                    one.mode = x.mode;
                 }
                 if (x instanceof TableConfig) {
                     one.children = [];
@@ -589,10 +740,10 @@ export default {
                         let mode;
                         switch (x.modes.direction) {
                             case TableConfig.Horizontal:
-                                mode = x.modes.configs.get(c.row);
+                                mode = x.modes.configs[c.row];
                                 break;
                             case TableConfig.Vertical:
-                                mode = x.modes.configs.get(c.col);
+                                mode = x.modes.configs[c.col];
                                 break;
                         }
                         one.children.add({
@@ -605,6 +756,7 @@ export default {
                             y: (c.rectangle.y * this.revertScale).toFixed().toInt(),
                             width: (c.rectangle.width * this.revertScale).toFixed().toInt(),
                             height: (c.rectangle.height * this.revertScale).toFixed().toInt(),
+                            comment: one.comment,
                             mode
                         })
                         i++;
@@ -613,6 +765,16 @@ export default {
                 ret.add(one);
             });
             return ret;
+        },
+        /**
+         * @param {TemplateItem} item
+         */
+        generateFromMenu(item) {
+            let cs = item.generate();
+            cs.forEach(config => {
+                config.scale(1 / this.revertScale);
+                this.currentPage?.configs?.push(config)
+            });
         },
         fill(direction) {
             let rect = this.viewport.getBoundingClientRect();
@@ -651,9 +813,14 @@ export default {
             this.showViewer = false;
         },
         rectChanged(changer, move) {
-            changer.region.rectangle.showDrag = true;
+            changer.region.showDrag = true;
             this.editingRect = changer;
             if (this.selectRects == null || this.selectRects.length === 0) return;
+            if (!this.selectRects.contains(changer)) {
+                this.selectRects.forEach(x => x.region.showDrag = false);
+                this.selectRects.clear();
+                return;
+            }
             this.selectRects.forEach(x => {
                 if (x !== changer) {
                     x.region.rectangle.move(move);
@@ -669,15 +836,13 @@ export default {
                 }
                 return;
             }
-            
-            
             if (this.editingRect !== rect) {
                 this.editingRect = rect;
             }
             this.selectRects = [rect];
             this.configs.forEach(x => {
                 if (x !== rect) {
-                    x.region.rectangle.showDrag = false;
+                    x.region.showDrag = false;
                 }
             })
         },
@@ -687,7 +852,7 @@ export default {
             this.rightDown = false;
             this.wrapRegion = new Rect(e.offsetX, e.offsetY, 0, 0);
             this.configs.forEach(x => {
-                x.region.rectangle.showDrag = false;
+                x.region.showDrag = false;
             })
             this.lastClickPos = new Point(e.offsetX, e.offsetY)
         },
@@ -711,10 +876,9 @@ export default {
             this.configs.forEach(x => {
                 if (x.region.rectangle.intersect(this.wrapRegion)) {
                     this.selectRects.add(x);
-                    x.region.rectangle.showDrag = true;
+                    x.region.showDrag = true;
                 }
             });
-            console.log(this.selectRects);
             this.wrapRegion = null;
             this.lastClickPos = null;
         },
@@ -745,7 +909,6 @@ export default {
             if (event.key === 'Control') {
                 this.ctrl = true;
             }
-            console.log(event.key)
             if (event.key === 'Delete') {
                 this.delete();
             }
@@ -757,7 +920,14 @@ export default {
                     this.paste();
                 }
             }
-            
+            switch (event.key) {
+                case 'ArrowUp':
+                case 'ArrowLeft':
+                case 'ArrowDown':
+                case 'ArrowRight':
+                    this.moveAll(1, event.key);
+                    break;
+            }
         },
         keyUp(event) {
             if (event.key === 'Control') {
@@ -800,6 +970,30 @@ export default {
                 }
             });
             this.$message.success(`粘贴成功`);
+        },
+        moveAll(distant, direction) {
+            if (this.selectRects.length === 0) return;
+            this.selectRects.forEach(x => {
+                let tar;
+                let rect = x.region.rectangle;
+                switch (direction) {
+                    case 'ArrowUp':
+                        if (rect.y === 0) return;
+                        tar = new Point(rect.x, rect.y - 1);
+                        break;
+                    case 'ArrowLeft':
+                        if (rect.x === 0) return;
+                        tar = new Point(rect.x - 1, rect.y);
+                        break;
+                    case 'ArrowDown':
+                        tar = new Point(rect.x, rect.y + 1);
+                        break;
+                    case 'ArrowRight':
+                        tar = new Point(rect.x + 1, rect.y);
+                        break;
+                }
+                x.region.rectangle.moveTo(tar);
+            })
         },
         /**
          * @param {Config} to
@@ -940,7 +1134,7 @@ export default {
                     }
                 });
                 ret.push({
-                    relationId: this.relationId,
+                    relationId: this.formId,
                     page,
                     configs
                 })
@@ -960,6 +1154,100 @@ export default {
                 this.$message.warning(e)
             }
             return ret;
+        },
+        async save() {
+            this.pages.forEach(x => x.configs.forEach(c => {
+                c.scale(this.revertScale);
+            }));
+            console.log(this.pages);
+            let json = this.pages.serialize;
+            console.log(json);
+            this.pages.forEach(x => x.configs.forEach(c => {
+                c.scale(1 / this.revertScale);
+            }));
+            try {
+                let r = await Request.post(Url.authservice.admin.design.saveInfo, {
+                    formId: this.formId,
+                    info: json
+                });
+                if (r.data.code !== 1) {
+                    throw r.data.msg;
+                }
+                this.$message.success(`暂存成功`);
+            } catch (e) {
+                this.$message.error(`暂存失败: [ ${e} ]`);
+            }
+        },
+        async loadConfig() {
+            let response;
+            try {
+                response = await Request.get(`${Url.authservice.admin.queryItem}?userId=${this.userId}`);
+                if (response.data.code !== 1) throw response.data.msg;
+            } catch (e) {
+                this.$message.error('配置请求失败 : [ ${e} ]');
+                return;
+            }
+            let config = [];
+            response.data.data.forEach(c => {
+                config.push(TemplateGroup.from(c))
+            });
+            this.menus = config;
+        },
+        loadFromJson(json) {
+            let data = json.deserialize();
+            data.forEach(x => {
+                x.__proto__ = Page.prototype;
+                Config.setProto(x.configs)
+            })
+            this.pages = data;
+            console.log(this.pages)
+        },
+        putLayer(direct) {
+            switch (direct) {
+                case 'top':
+                    this.selectRects[0].region.layer = Region.MaxLayer;
+                    break;
+                case 'bottom':
+                    this.configs.forEach(x => x.region.layer += 1);
+                    this.selectRects[0].region.layer = Region.MinLayer;
+                    break;
+            }
+        },
+        async makeTemplate() {
+            let cs = this.selectRects.aggregate([], (arr, c) => {
+                let t = c.clone;
+                t.scale(this.revertScale);
+                arr.push(t)
+                return arr;
+            })
+            debugger;
+            let name = this.createTemplate.name;
+            let result;
+            try {
+                result = await Request.post(Url.authservice.admin.template.saveTemplate, {
+                    info: cs.serialize,
+                    title: name,
+                    userId: this.userId
+                });
+                if (result.data.code !== 1) {
+                    throw result.data.msg;
+                }
+                this.$message.success("保存成功");
+                this.createTemplate.name = '';
+                this.createTemplate.show = false;
+                await this.loadConfig();
+            } catch (e) {
+                this.$message.error(`保存失败 : [ ${e} ]`);
+            }
+        },
+        async deleteTemplate(id) {
+            try {
+                await Request.get(`${Url.authservice.admin.template.deleteTemplate}?templateId=${id}`);
+                this.$message.success('删除成功');
+                await this.loadConfig();
+            } catch (e) {
+                this.$message.error(`删除失败 : [ ${e} ]`)
+            }
         }
     }
 }
@@ -1003,6 +1291,30 @@ export default {
 
 .el-menu-item:hover {
     background-color: #f2f2f2 !important;
+}
+
+.unSelect {
+    user-select: none;
+    pointer-events: none;
+}
+
+.descriptorDiv {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 14px;
+    user-select: none;
+    pointer-events: none;
+    z-index: 0;
+    color: grey;
+    
+    .descriptor {
+        z-index: 0;
+        white-space: nowrap;
+        font-size: 14px;
+        position: absolute;
+        color: grey;
+    }
 }
 
 #Background {
