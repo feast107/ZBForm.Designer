@@ -21,6 +21,11 @@ export default (function () {
         let index = this.findIndex((x) => Object.is(x, item));
         return index >= 0 ? this.splice(index, 1)[0] : false;
     };
+    Object.defineProperty(Object.prototype,'serialize',{
+        get: function (){
+            return JSON.stringify(this);
+        }
+    })
     Object.defineProperty(Object.prototype, "copy", {
         get: function () {
             let ret;
@@ -80,6 +85,9 @@ export default (function () {
             };
         }
     };
+    Number.prototype.round = function (){
+        return this.toFixed().toInt();
+    }
     String.prototype.deserialize = function(type = null){
         let ret = JSON.parse(this);
         if (type) {
