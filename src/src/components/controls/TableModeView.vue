@@ -4,7 +4,7 @@
         active-value="horizontal"
         active-text="横向"
         inactive-value="vertical"
-        inactive-text="纵向" @change="_ => table.modes.configs = new Map()"
+        inactive-text="纵向" @change="_ => this.table.modes.configs = {}"
         style="--el-switch-on-color: #31acee; --el-switch-off-color: #4ad71b;"
         v-model="table.modes.direction"></el-switch>
     <div class="grid" style="grid-template-columns:1fr auto 1fr;grid-template-rows:1fr auto 1fr;">
@@ -30,10 +30,10 @@
                         />
                     </el-select>
                     <template #reference>
-                        <el-button v-if="!table.modes.configs?.containsKey(index)" class="but" type="success"
+                        <el-button v-if="!table.modes.configs[index]" class="but" type="success"
                                    @click="()=>{  }">+
                         </el-button>
-                        <el-button class="but" type="success">{{ table.modes.configs.get(index).name }}</el-button>
+                        <el-button class="but" type="success">{{ table.modes.configs[index].name }}</el-button>
                     </template>
                 </el-popover>
             </div>
@@ -60,10 +60,10 @@
                         />
                     </el-select>
                     <template #reference>
-                        <el-button v-if="!table.modes.configs?.containsKey(index)" class="but" type="primary">
+                        <el-button v-if="!table.modes.configs[index]" class="but" type="primary">
                             +
                         </el-button>
-                        <el-button class="but" type="primary">{{ table.modes.configs.get(index).name }}</el-button>
+                        <el-button class="but" type="primary">{{ table.modes.configs[index].name }}</el-button>
                     </template>
                 </el-popover>
             </div>
@@ -97,14 +97,14 @@
                                     </el-descriptions-item>
                                     <el-descriptions-item label="识别模式">
                                         <div v-if="table.modes.direction === 'horizontal'">
-                                            <div v-if="table.modes.configs?.containsKey(rect.row)">
-                                                <span>{{ table.modes.configs.get(rect.row).name }}</span>
+                                            <div v-if="table.modes.configs[rect.row]">
+                                                <span>{{ table.modes.configs[rect.row].name }}</span>
                                             </div>
                                             <span v-else>空</span>
                                         </div>
                                         <div v-if="table.modes.direction === 'vertical'">
-                                            <div v-if="table.modes.configs?.containsKey(rect.col)">
-                                                <span>{{ table.modes.configs.get(rect.col).name }}</span>
+                                            <div v-if="table.modes.configs[rect.col]">
+                                                <span>{{ table.modes.configs[rect.col].name }}</span>
                                             </div>
                                             <span v-else>空</span>
                                         </div>
@@ -165,7 +165,7 @@ export default {
     },
     data() {
         if (this.table.modes.configs == null) {
-            this.table.modes.configs = new Map();
+            this.table.modes.configs = {};
         }
         this.table.region.columDefinitions.orderBy(x => x);
         this.table.region.rowDefinitions.orderBy(x => x);
@@ -183,7 +183,7 @@ export default {
                 this.table.modes;
                 if (n.modes.direction !== o.modes.direction) {
                     //TODO:变了啊
-                    this.table.modes.configs = new Map();
+                    this.table.modes.configs = {};
                 }
             }
         }
@@ -209,10 +209,9 @@ export default {
             return region.getCells();
         },
         setMode(index, mode) {
-            this.table.modes.configs.set(index, mode);
+            this.table.modes.configs[index] = mode;
         },
         removeMode(index) {
-            this.table.modes.configs.delete(index);
             delete this.table.modes.configs[index];
         }
     }
