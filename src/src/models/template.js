@@ -16,7 +16,7 @@ export class TemplateGroup {
 
     static from(other) {
         let ret = Object.move(other, new TemplateGroup());
-        ret.items = other.items.aggregate([],(arr,item)=>{
+        ret.items = other.items.aggregate([], (arr, item) => {
             arr.push(TemplateItem.from(item))
             return arr;
         })
@@ -31,7 +31,7 @@ export class TemplateItem {
         this.type = type;
         this.color = Config.modifyColor(color);
         /**
-         * @type {()=>Config}
+         * @type {()=>Config[]}
          */
         this.generate = null;
         this.relate = relate;
@@ -55,6 +55,19 @@ export class TemplateItem {
                 };
                 break;
             default:
+                if (!value) return;
+                /**
+                 * @type {Config[]}
+                 */
+                let cs = value.deserialize();
+                Config.setProto(cs);
+                this.generate = function () {
+                    return cs.aggregate([], (arr, config) => {
+                        arr.push(config.clone);
+                        return arr;
+                    });
+                }
+                this.isCustom = true;
                 break;
         }
     }
