@@ -1,59 +1,59 @@
 <template>
-    <div style="position: absolute;" ref="ref"
-         :style="`height:${rectangle.Height}px;width:${rectangle.Width}px;top:${rectangle.Top}px;left:${rectangle.Left}px;z-index:${index}`">
+    <div style="position: absolute;border: 1px solid black" ref="ref"
+         :style="`height:${rectangle.Height}px;width:${rectangle.Width}px;top:${rectangle.Top}px;left:${rectangle.Left}px;z-index:${rect.layer}`">
         <div ref="showContextmenu" :onmousedown="mousedown" :onclick="switchDrag" style="height: 100%;width:100%;">
             <div v-for="(col, index) in columDefinitions" :key="col"
                  :onmousedown="(e) => this.editDown(e, (point) => this.colEdit(point, index))"
-                 :style="`left:${col}px;width:${rectangle.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${
-                     rectangle.showDrag ? lineColor : 'black'}`"
+                 :style="`left:${col}px;width:${this.rect.showDrag ? 3 : 1}px;height:${rectangle.Height}px;background-color:${
+                     this.rect.showDrag ? lineColor : 'black'}`"
                  style="cursor: w-resize;" class="innerBorder"></div>
             <div v-for="(row, index) in rowDefinitions" :key="row"
                  :onmousedown="(e) => this.editDown(e, (point) => this.rowEdit(point, index))"
-                 :style="`top:${row}px;height:${rectangle.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${
-                     rectangle.showDrag ? lineColor : 'black'}`"
+                 :style="`top:${row}px;height:${this.rect.showDrag ? 3 : 1}px;width:${rectangle.Width}px;background-color:${
+                     this.rect.showDrag ? lineColor : 'black'}`"
                  style="cursor: n-resize;" class="innerBorder"></div>
         </div>
-       
+        <slot default ></slot>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeftTop)" :onmouseup="onResizeUp"
              style="cursor: nw-resize;"
              :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;top:-${outer}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                  this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeRightTop)" :onmouseup="onResizeUp"
              style="cursor: ne-resize;"
              :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;top:-${outer}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                 this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeftBottom)" :onmouseup="onResizeUp"
              style="cursor: sw-resize;"
              :style="`width: ${outer}px;height: ${outer}px;left: -${outer}px;bottom:-${outer}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                 this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeRightBottom)" :onmouseup="onResizeUp"
              style="cursor: se-resize;"
              :style="`width: ${outer}px;height: ${outer}px;right:-${outer}px;bottom:-${outer}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                 this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeLeft)" :onmouseup="onResizeUp"
              style="cursor: w-resize;"
              :style="`width: ${outer}px;height: ${rectangle.Height}px;left: -${outer}px;top: ${0}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                  this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeTop)" :onmouseup="onResizeUp"
              style="cursor: n-resize;"
              :style="`width: ${rectangle.Width}px;height: ${outer}px;left:  ${0}px;top:-${outer}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                 this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeRight)" :onmouseup="onResizeUp"
              style="cursor: e-resize;"
              :style="`width: ${outer}px;height: ${rectangle.Height}px;right:-${outer}px;top:${0}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                  this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
         <div class="resizer" :onmousedown="(e) => this.onResizeDown(e, this.resizeBottom)" :onmouseup="onResizeUp"
              style="cursor: s-resize;"
              :style="`width: ${rectangle.Width}px;height: ${outer}px;left:  ${0}px;bottom:-${outer}px;display:${
-                 rectangle.showDrag ? '' : 'none'};background-color:${borderColor}`">
+                  this.rect.showDrag ? '' : 'none'};background-color:${borderColor}`">
         </div>
     </div>
 </template>
@@ -61,7 +61,7 @@
 <script>
 import {Point} from '@/utils/drawing/point';
 import {Rect} from '@/utils/drawing/rect';
-import {Table} from "@/models/table";
+import {Table} from "@/models/region";
 
 export default {
     props: {
@@ -74,7 +74,7 @@ export default {
         },
         borderColor: {
             type: String,
-            default: '#a0a0a080'
+            default: '#a0a0a040'
         },
         onResizeStart: {
             type: Function,
@@ -94,13 +94,19 @@ export default {
         onMove: {
             type: Function,
         },
-        onContextMenu:{
-            type : Function,
+        onContextMenu: {
+            type: Function,
         }
     },
     data() {
         const rect = this.rect;
         return {
+            get showDrag() {
+                return rect.showDrag;
+            },
+            set showDrag(value) {
+                rect.showDrag = value;
+            },
             /**
              * @type {Rect}
              */
@@ -111,7 +117,6 @@ export default {
             resizing: false,
             lastPoint: null,
             outer: 10,
-            index: 99,
             /**
              * @type {Number[]}
              */
@@ -178,7 +183,7 @@ export default {
         },
         switchDrag() {
             if (this.dragged) return;
-            this.rectangle.showDrag = !this.rectangle.showDrag;
+            this.showDrag = !this.showDrag;
             this.onSelect?.call(null, this.rect);
         },
         mousedown(e) {
@@ -195,8 +200,8 @@ export default {
             window.onmousemove = null;
             window.onmouseup = null;
             this.index = 1;
-            if(_.button === 2){
-                this.onContextMenu?.call(null,_);
+            if (_.button === 2) {
+                this.onContextMenu?.call(null, _);
             }
             setTimeout(() => {
                 this.dragged = false;
