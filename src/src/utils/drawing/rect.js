@@ -164,6 +164,13 @@ export class Rect {
         return new Point(this.x + this.width / 2, this.y + this.height / 2);
     }
 
+    round(){
+        this.width = this.width.round();
+        this.height = this.height.round();
+        this.x = this.x.round();
+        this.y = this.y.round();
+    }
+
     /**
      * 是否相交
      * @param {Rect} another
