@@ -16,22 +16,27 @@ export class Url {
                 return {
                     route,
                     url: concat(url, route),
-                    get queryItem() {
-                        return concat(this.url, 'queryItem');
-                    },
-                    get queryFormInfo() {
-                        return concat(this.url, 'queryFormInfo');
-                    },
-                    get design() {
-                        let url = concat(this.url, 'design');
+                    get template(){
+                        let url = this.url
+                        let route = 'template'
                         return {
-                            url,
-                            get saveConfig() {
-                                return concat(this.url, 'saveConfig');
-                            },
-                            get saveInfo() {
-                                return concat(this.url, 'saveInfo');
-                            }
+                            route,
+                            url : concat(url,route),
+                            get saveTemplate(){ return concat(this.url, 'saveTemplate') },
+                            get deleteTemplate(){ return concat(this.url, 'deleteTemplate') }
+                        };
+                    },
+                    get queryItem() {return concat(this.url, 'queryItem');},
+                    get queryFormInfo() {return concat(this.url, 'queryFormInfo');},
+                    get design() {
+                        let route = 'design';
+                        let url = this.url;
+                        return {
+                            route,
+                            url: concat(url, 'design'),
+                            get saveConfig() {return concat(this.url, 'saveConfig');},
+                            get saveInfo() {return concat(this.url, 'saveInfo');},
+                            get queryInfo() {return concat(this.url, 'queryInfo');}
                         };
                     }
                 };
