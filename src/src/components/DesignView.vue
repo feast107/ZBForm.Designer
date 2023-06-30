@@ -757,6 +757,8 @@ export default {
                             width: (c.rectangle.width * this.revertScale).toFixed().toInt(),
                             height: (c.rectangle.height * this.revertScale).toFixed().toInt(),
                             comment: one.comment,
+                            col : c.col + 1,
+                            row : c.row + 1,
                             mode
                         })
                         i++;
